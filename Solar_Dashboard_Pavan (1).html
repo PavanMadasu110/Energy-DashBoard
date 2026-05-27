@@ -1,0 +1,2784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunfinity — Solar Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060d18;
+  --acc:#f59e0b;
+  --acc2:#fb923c;
+  --acc3:#34d399;
+  --blue:#60a5fa;
+  --violet:#a78bfa;
+  --rose:#f472b6;
+  --sky:#38bdf8;
+  --lime:#a3e635;
+  --t1:#f1f5f9;
+  --t2:#94a3b8;
+  --t3:#475569;
+  --t4:#1e293b;
+  --card:#0f1c2e;
+  --card2:#0a1525;
+  --bdr:rgba(245,158,11,0.18);
+  --bdr2:rgba(245,158,11,0.35);
+  --bdr3:rgba(255,255,255,0.07);
+}
+html,body{min-height:100%;overflow-x:hidden}
+body{font-family:'Outfit',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px}
+
+#scene-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#app{position:relative;z-index:1}
+
+/* ── TOPNAV ── */
+.tnav{display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:56px;background:rgba(4,9,18,0.96);border-bottom:1px solid var(--bdr2);position:sticky;top:0;z-index:300;backdrop-filter:blur(20px)}
+.tnav::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-sun{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#fb923c);display:flex;align-items:center;justify-content:center;font-size:19px;animation:pulse 3s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{box-shadow:0 0 12px rgba(245,158,11,0.5)}50%{box-shadow:0 0 24px rgba(245,158,11,0.9),0 0 48px rgba(245,158,11,0.3)}}
+.brand-name{font-size:21px;font-weight:900;background:linear-gradient(90deg,#fbbf24,#f97316,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.04em}
+.brand-sub{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;margin-top:1px}
+.nav-pills{display:flex;gap:2px;margin-left:20px}
+.npill{padding:5px 13px;border-radius:6px;font-size:11px;cursor:pointer;color:var(--t2);border:1px solid transparent;transition:all .18s;font-weight:500;background:none}
+.npill.on{background:rgba(245,158,11,0.16);color:var(--acc);border-color:var(--bdr)}
+.npill:hover:not(.on){background:rgba(255,255,255,0.05);color:var(--t1)}
+.nav-r{display:flex;align-items:center;gap:10px}
+.nbadge{padding:3px 11px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(245,158,11,0.12);color:var(--acc);border:1px solid var(--bdr2);font-family:'JetBrains Mono',monospace}
+.live{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)}
+.ldot{width:7px;height:7px;border-radius:50%;background:#34d399;animation:blink 2s infinite;box-shadow:0 0 8px #34d399}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.sbtn{padding:6px 16px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#f59e0b,#fb923c);border:none;color:#000;box-shadow:0 0 16px rgba(245,158,11,0.4);transition:all .2s;font-family:'Outfit',sans-serif}
+.sbtn:hover{transform:translateY(-1px);box-shadow:0 0 28px rgba(245,158,11,0.7)}
+
+/* ── CONTROL BAR ── */
+.cbar{display:flex;align-items:center;gap:0;background:rgba(7,12,22,0.97);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 22px;flex-wrap:wrap;backdrop-filter:blur(8px)}
+.cs{display:flex;align-items:center;gap:8px;padding:8px 16px 8px 0;border-right:1px solid rgba(255,255,255,0.06);margin-right:16px}
+.cs:last-child{border-right:none;margin-right:0}
+.clbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.ctabs{display:flex;gap:2px}
+.ctab{padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid rgba(255,255,255,0.07);color:var(--t2);background:rgba(10,21,37,0.8);transition:all .15s;font-weight:500}
+.ctab.on{background:rgba(245,158,11,0.18);border-color:var(--acc);color:var(--acc);font-weight:700}
+.ctab:hover:not(.on){color:var(--t1);border-color:rgba(255,255,255,0.15)}
+.cfield{padding:4px 9px;border-radius:4px;font-size:11px;border:1px solid rgba(255,255,255,0.07);background:rgba(10,21,37,0.8);color:var(--t1);outline:none;font-family:'Outfit',sans-serif;transition:border-color .15s}
+.cfield:focus{border-color:var(--acc)}
+select.cfield{cursor:pointer}
+
+/* ══ CARD WRAPPER — the magic corner-description system ══ */
+.card-wrap{
+  position:relative;
+  background:var(--card);
+  border:1px solid var(--bdr);
+  border-radius:16px;
+  overflow:visible;
+  display:flex;flex-direction:column;gap:10px;
+}
+/* Four corner badges */
+.cc{
+  position:absolute;
+  z-index:10;
+  background:rgba(4,9,18,0.97);
+  border:1px solid var(--bdr2);
+  border-radius:10px;
+  padding:7px 10px;
+  font-size:9.5px;
+  line-height:1.4;
+  width:152px;
+  pointer-events:none;
+  backdrop-filter:blur(12px);
+  transition:opacity .2s;
+}
+/* Top-left */
+.cc.tl{top:-1px;left:-1px;border-top-left-radius:16px;border-top-right-radius:4px;border-bottom-left-radius:4px;border-bottom-right-radius:10px;border-color:var(--bdr2)}
+/* Top-right */
+.cc.tr{top:-1px;right:-1px;border-top-right-radius:16px;border-top-left-radius:4px;border-bottom-right-radius:4px;border-bottom-left-radius:10px;text-align:right;border-color:rgba(96,165,250,0.3)}
+/* Bottom-left */
+.cc.bl{bottom:-1px;left:-1px;border-bottom-left-radius:16px;border-bottom-right-radius:4px;border-top-left-radius:4px;border-top-right-radius:10px;border-color:rgba(52,211,153,0.3)}
+/* Bottom-right */
+.cc.br{bottom:-1px;right:-1px;border-bottom-right-radius:16px;border-bottom-left-radius:4px;border-top-right-radius:4px;border-top-left-radius:10px;text-align:right;border-color:rgba(167,139,250,0.3)}
+.cc-icon{font-size:11px;margin-bottom:2px;display:block}
+.cc-title{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);display:block;margin-bottom:3px;font-family:'JetBrains Mono',monospace}
+.cc-body{color:var(--t2);display:block}
+.cc-formula{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--acc);margin-top:3px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Inner content pad — make room for corners */
+.card-inner{padding:44px 16px 44px 16px;display:flex;flex-direction:column;gap:9px}
+
+/* Card title area */
+.ph{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.pt{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.12em;font-family:'JetBrains Mono',monospace}
+.pm{font-size:10px;color:var(--t3)}
+.pact{display:flex;gap:4px}
+.bxs{padding:3px 9px;border-radius:4px;font-size:10px;cursor:pointer;background:rgba(10,21,37,0.9);border:1px solid rgba(255,255,255,0.08);color:var(--t2);transition:all .15s;font-family:'Outfit',sans-serif}
+.bxs.on{background:rgba(245,158,11,0.16);border-color:var(--acc);color:var(--acc)}
+.bxs:hover:not(.on){color:var(--t1)}
+.leg{display:flex;flex-wrap:wrap;gap:9px}
+.li{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)}
+.lsq{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.lln{width:18px;height:2px;border-radius:1px;flex-shrink:0}
+.ldsh{width:18px;border-top:2px dashed;flex-shrink:0}
+.cw{position:relative;width:100%}
+.h220{height:220px}.h180{height:180px}.h160{height:160px}.h140{height:140px}.h120{height:120px}
+
+/* ── KPI CARDS ── */
+.kpi-section{padding:60px 22px 12px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+.kpi-card{
+  position:relative;background:var(--card);border:1px solid var(--bdr);border-radius:16px;
+  transition:all .25s;cursor:default;overflow:visible;
+}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(245,158,11,0.12)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:16px 16px 0 0}
+.kpi-card.ck1::before{background:linear-gradient(90deg,#f59e0b,#fb923c)}
+.kpi-card.ck2::before{background:#60a5fa}
+.kpi-card.ck3::before{background:#34d399}
+.kpi-card.ck4::before{background:#f472b6}
+.kpi-card.ck5::before{background:#fbbf24}
+.kpi-card.ck6::before{background:#a78bfa}
+.kpi-card.ck7::before{background:#38bdf8}
+.kpi-card.ck8::before{background:#a3e635}
+.kpi-inner{padding:12px 14px 14px 14px;margin-top:32px}
+.kpi-icon{font-size:16px;margin-bottom:5px;display:block}
+.kpi-label{font-size:8.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.kpi-value{font-size:24px;font-weight:900;letter-spacing:-0.05em;line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:9px;color:var(--t3)}
+.up{color:#34d399;font-weight:700}.dn{color:#f472b6;font-weight:700}.wn{color:#fbbf24;font-weight:700}
+
+/* ── MAIN GRID ── */
+.main-grid{display:grid;grid-template-columns:1fr 1fr 288px;gap:28px;padding:0 22px 14px}
+.tall{grid-row:span 2}
+
+/* ── SITE TABLE ── */
+.stbl{width:100%;border-collapse:collapse}
+.stbl th{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:5px 6px;text-align:left;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace}
+.stbl td{padding:6px 6px;font-size:11px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.stbl tr:hover td{background:rgba(245,158,11,0.05)}
+.stbl tr:last-child td{border-bottom:none}
+.srank{font-size:9px;color:var(--t3);width:16px;font-family:'JetBrains Mono',monospace}
+.sname{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.skwh{color:var(--acc);font-weight:700;text-align:right;font-family:'JetBrains Mono',monospace}
+.spr{text-align:right}
+.prbar{display:flex;align-items:center;gap:5px}
+.prbg{flex:1;height:4px;background:rgba(10,21,37,0.9);border-radius:2px;overflow:hidden;min-width:28px}
+.prfill{height:100%;border-radius:2px}
+.prval{font-size:9px;min-width:24px;text-align:right;font-family:'JetBrains Mono',monospace}
+
+/* ── HEATMAP ── */
+.hmgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.hmhdr{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
+.hmd{font-size:8px;color:var(--t3);text-align:center;font-family:'JetBrains Mono',monospace}
+.hmc{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;cursor:pointer;transition:all .12s;color:rgba(255,255,255,.8);font-family:'JetBrains Mono',monospace}
+.hmc:hover{transform:scale(1.3);z-index:10;position:relative;box-shadow:0 0 10px rgba(245,158,11,0.6)}
+
+/* ── SPARKLINES ── */
+.spkrow{display:flex;flex-direction:column;gap:7px}
+.spkitem{display:flex;align-items:center;gap:8px}
+.spklabel{font-size:10px;color:var(--t2);width:50px;flex-shrink:0;font-family:'JetBrains Mono',monospace}
+.spkval{font-size:11px;font-weight:700;width:64px;text-align:right;flex-shrink:0;font-family:'JetBrains Mono',monospace}
+.spkw{flex:1;height:24px}
+
+/* ── MINI CARDS ── */
+.mcards{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.mcard{background:var(--card2);border-radius:8px;border:1px solid rgba(245,158,11,0.1);padding:9px 11px;transition:all .2s}
+.mcard:hover{border-color:rgba(245,158,11,0.3)}
+.mclbl{font-size:9px;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.08em;font-family:'JetBrains Mono',monospace}
+.mcval{font-size:15px;font-weight:800;letter-spacing:-0.03em}
+.mcsub{font-size:9px;color:var(--t3);margin-top:2px}
+
+/* ── BOTTOM ROW ── */
+.bot-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px;padding:0 22px 28px}
+
+/* ── FOOTER ── */
+.foot{padding:10px 22px;background:rgba(4,9,18,0.98);border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+.ftags{display:flex;gap:6px}
+.ftag{padding:2px 9px;border-radius:4px;background:rgba(10,21,37,0.8);border:1px solid rgba(255,255,255,0.07)}
+
+/* ── SIDEBAR ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:490;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.open{opacity:1;pointer-events:all}
+.sidebar{position:fixed;top:0;right:0;width:310px;height:100vh;background:#060e1a;border-left:1px solid var(--bdr2);z-index:500;transform:translateX(100%);transition:transform .3s;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar.open{transform:translateX(0)}
+.sb-hdr{padding:15px 18px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between}
+.sb-tit{font-size:13px;font-weight:700}
+.sb-x{cursor:pointer;background:none;border:none;color:var(--t2);font-size:18px;padding:4px;border-radius:4px}
+.sb-x:hover{color:var(--t1);background:rgba(245,158,11,0.1)}
+.sb-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px;flex:1}
+.sb-sec{display:flex;flex-direction:column;gap:7px}
+.sb-sec-t{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.06);font-family:'JetBrains Mono',monospace}
+.sb-row{display:flex;flex-direction:column;gap:3px}
+.sb-row label{font-size:11px;color:var(--t2)}
+.sb-row input,.sb-row select{padding:6px 10px;border-radius:6px;font-size:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(10,21,37,0.9);color:var(--t1);outline:none;width:100%;font-family:'Outfit',sans-serif;transition:border-color .15s}
+.sb-row input:focus,.sb-row select:focus{border-color:var(--acc)}
+.sb-row input[type=color]{height:32px;padding:2px 4px;cursor:pointer}
+.sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px}
+.sbb{flex:1;padding:8px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Outfit',sans-serif;transition:all .18s}
+.sbb.p{background:linear-gradient(135deg,#f59e0b,#fb923c);color:#000}.sbb.p:hover{box-shadow:0 0 18px rgba(245,158,11,0.5)}
+.sbb.s{background:rgba(10,21,37,0.9);border:1px solid rgba(255,255,255,0.08);color:var(--t2)}.sbb.s:hover{color:var(--t1)}
+
+/* ── AGS BRANDING BANNER ── */
+.ags-banner{
+  background:linear-gradient(135deg,#001a00 0%,#003300 35%,#004d00 60%,#001a00 100%);
+  border-bottom:2px solid rgba(52,211,153,0.5);
+  padding:0 22px;
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:48px;
+  position:relative;overflow:hidden;
+}
+.ags-banner::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(52,211,153,0.03) 40px,rgba(52,211,153,0.03) 41px);
+  pointer-events:none;
+}
+.ags-banner::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(52,211,153,0.6),rgba(245,158,11,0.6),rgba(52,211,153,0.6),transparent);
+  animation:agsShimmer 4s linear infinite;
+}
+@keyframes agsShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.ags-left{display:flex;align-items:center;gap:14px;flex:1;min-width:0;margin-right:16px}
+.ags-logo-wrap{
+  display:flex;align-items:center;justify-content:center;
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#005500,#00aa44,#34d399);
+  box-shadow:0 0 16px rgba(52,211,153,0.5),0 0 32px rgba(52,211,153,0.2);
+  animation:agsLogoPulse 3s ease-in-out infinite;
+  font-size:20px;
+}
+@keyframes agsLogoPulse{0%,100%{box-shadow:0 0 16px rgba(52,211,153,0.5),0 0 32px rgba(52,211,153,0.2)}50%{box-shadow:0 0 24px rgba(52,211,153,0.9),0 0 48px rgba(52,211,153,0.4)}}
+.ags-text-block{display:flex;flex-direction:column;gap:1px}
+.ags-name{
+  font-size:15px;font-weight:900;letter-spacing:0.04em;
+  background:linear-gradient(90deg,#34d399,#86efac,#34d399,#a3e635);
+  background-size:300% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shimmer 4s linear infinite;
+  font-family:'Outfit',sans-serif;
+}
+.ags-fullname{font-size:9px;color:rgba(52,211,153,0.6);letter-spacing:.12em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.ags-divider{width:1px;height:30px;background:linear-gradient(to bottom,transparent,rgba(52,211,153,0.3),transparent)}
+.ags-tagline-wrap{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+/* Caption rotator */
+.ags-caption-rotator{
+  position:relative;height:28px;overflow:hidden;
+  display:flex;align-items:center;width:100%;
+}
+.ags-caption-item{
+  position:absolute;top:0;left:0;width:100%;
+  display:flex;align-items:center;gap:7px;
+  font-size:12px;font-weight:700;color:#f1f5f9;
+  font-family:'Outfit',sans-serif;
+  opacity:0;transform:translateY(20px);
+  transition:opacity 0.55s ease, transform 0.55s ease;
+  white-space:normal;word-break:break-word;
+  line-height:1.3;
+}
+.ags-caption-item.active{
+  opacity:1;transform:translateY(0);
+}
+.ags-caption-item.exit{
+  opacity:0;transform:translateY(-18px);
+}
+.ags-caption-item .cap-emoji{font-size:15px;flex-shrink:0}
+.ags-caption-item .cap-text em{
+  background:linear-gradient(90deg,#fbbf24,#fb923c,#fbbf24);
+  background-size:200% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shimmer 3s linear infinite;
+  font-style:italic;font-weight:900;
+}
+.ags-caption-item .cap-text b{color:#34d399}
+/* Dot indicators */
+.ags-caption-dots{display:flex;align-items:center;gap:4px;margin-top:2px}
+.ags-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:rgba(52,211,153,0.25);
+  transition:all 0.4s ease;cursor:pointer;
+}
+.ags-dot.on{
+  background:#34d399;width:14px;border-radius:3px;
+  box-shadow:0 0 6px rgba(52,211,153,0.6);
+}
+.ags-sub-label{font-size:9px;color:rgba(52,211,153,0.45);letter-spacing:.1em;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.ags-right{display:flex;align-items:center;gap:10px}
+.ags-badge{
+  padding:4px 12px;border-radius:20px;font-size:9px;font-weight:700;
+  border:1px solid;font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:5px;white-space:nowrap;
+}
+.ags-badge.green{background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.4);color:#34d399}
+.ags-badge.amber{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.35);color:#f59e0b}
+.ags-badge.blue{background:rgba(96,165,250,0.1);border-color:rgba(96,165,250,0.3);color:#60a5fa}
+.ags-solar-dot{width:6px;height:6px;border-radius:50%;background:#34d399;animation:blink 2.5s infinite;box-shadow:0 0 6px #34d399}
+
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:rgba(245,158,11,0.25);border-radius:2px}
+
+/* section labels */
+.section-label{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.15em;font-family:'JetBrains Mono',monospace;padding:12px 22px 6px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.05)}
+
+/* ── INFO BUTTON + POPUP ── */
+.kpi-card,.card-wrap{position:relative}
+.info-btn{
+  position:absolute;top:10px;right:12px;z-index:20;
+  background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);
+  border-radius:8px;padding:3px 8px;font-size:14px;cursor:pointer;
+  color:var(--acc);transition:all .2s;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.info-btn:hover{background:rgba(245,158,11,0.32);box-shadow:0 0 12px rgba(245,158,11,0.45);transform:scale(1.12)}
+.info-pop{
+  position:absolute;top:42px;right:8px;z-index:100;
+  width:230px;
+  background:var(--popup-bg,rgba(6,11,22,0.98));
+  border:1px solid var(--acc);
+  border-radius:12px;
+  padding:0;
+  box-shadow:0 8px 40px rgba(245,158,11,0.25),0 2px 12px rgba(0,0,0,0.6);
+  display:none;
+  animation:popIn .18s ease;
+  overflow:hidden;
+}
+.info-pop.open{display:block}
+@keyframes popIn{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.pop-head{display:flex;align-items:center;gap:7px;padding:10px 13px 8px;background:rgba(245,158,11,0.12);border-bottom:1px solid rgba(245,158,11,0.2)}
+.pop-icon{font-size:16px}
+.pop-title{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.08em;font-family:'JetBrains Mono',monospace;flex:1}
+.pop-close{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;transition:color .15s;line-height:1}
+.pop-close:hover{color:var(--t1)}
+.pop-body{padding:10px 13px 12px;font-size:11px;color:var(--t2);line-height:1.55}
+.pop-formula{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--acc);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:6px;padding:5px 9px;margin-top:8px;word-break:break-all}
+
+/* ── THEME SWITCHER ── */
+.theme-wrap{display:flex;gap:3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:3px}
+.theme-btn{width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;background:none;transition:all .18s;line-height:1}
+.theme-btn:hover{background:rgba(255,255,255,0.1);transform:scale(1.1)}
+.theme-btn.active{background:rgba(245,158,11,0.25);box-shadow:0 0 10px rgba(245,158,11,0.4)}
+
+/* ── THEME DEFINITIONS ── */
+body.theme-dark{
+  --bg:#060d18;--card:#0f1c2e;--card2:#0a1525;
+  --t1:#f1f5f9;--t2:#94a3b8;--t3:#475569;
+  --bdr:rgba(245,158,11,0.18);--bdr2:rgba(245,158,11,0.35);
+  --popup-bg:rgba(6,11,22,0.98);
+}
+body.theme-solar{
+  --bg:#0b0d06;--card:#121a0d;--card2:#0e1509;
+  --t1:#fef9ec;--t2:#a89d7a;--t3:#6b5d3a;
+  --bdr:rgba(251,191,36,0.22);--bdr2:rgba(251,191,36,0.4);
+  --popup-bg:rgba(8,12,4,0.98);
+  --acc:#ffb820;--acc2:#ff7a1a;
+}
+body.theme-light{
+  --bg:#f5f0e8;--card:#fffdf5;--card2:#fff8e6;
+  --t1:#1a1208;--t2:#5c4a20;--t3:#8a7040;
+  --bdr:rgba(180,120,20,0.3);--bdr2:rgba(180,120,20,0.5);
+  --popup-bg:rgba(255,252,240,0.99);
+}
+body.theme-ocean{
+  --bg:#010d1a;--card:#061828;--card2:#031220;
+  --t1:#e0f4ff;--t2:#7ab8d8;--t3:#3a6a88;
+  --bdr:rgba(56,189,248,0.2);--bdr2:rgba(56,189,248,0.4);
+  --popup-bg:rgba(1,10,20,0.98);
+  --acc:#38bdf8;--acc2:#0ea5e9;
+}
+body.theme-ember{
+  --bg:#0f0502;--card:#1e0c06;--card2:#16080a;
+  --t1:#fff0e8;--t2:#c47a5a;--t3:#7a3a22;
+  --bdr:rgba(239,68,68,0.22);--bdr2:rgba(239,68,68,0.42);
+  --popup-bg:rgba(12,4,2,0.98);
+  --acc:#f87171;--acc2:#ef4444;
+}
+body.theme-aurora{
+  --bg:#060814;--card:#0e1228;--card2:#080c1e;
+  --t1:#f0eeff;--t2:#9b8fd4;--t3:#4a3d88;
+  --bdr:rgba(167,139,250,0.2);--bdr2:rgba(167,139,250,0.4);
+  --popup-bg:rgba(5,6,18,0.98);
+  --acc:#a78bfa;--acc2:#7c3aed;
+}
+body.theme-matrix{
+  --bg:#000d00;--card:#001800;--card2:#001200;
+  --t1:#d4ffda;--t2:#4ade80;--t3:#166534;
+  --bdr:rgba(74,222,128,0.18);--bdr2:rgba(74,222,128,0.35);
+  --popup-bg:rgba(0,8,0,0.98);
+  --acc:#4ade80;--acc2:#22c55e;
+}
+body.theme-rose{
+  --bg:#0f060e;--card:#1e0d1c;--card2:#180810;
+  --t1:#ffe8f5;--t2:#d478b0;--t3:#8a3060;
+  --bdr:rgba(244,114,182,0.2);--bdr2:rgba(244,114,182,0.4);
+  --popup-bg:rgba(12,3,10,0.98);
+  --acc:#f472b6;--acc2:#ec4899;
+}
+/* Light theme overrides */
+body.theme-light .tnav{background:rgba(255,248,220,0.98)}
+body.theme-light .cbar{background:rgba(255,252,235,0.98)}
+body.theme-light .stbl td{border-bottom-color:rgba(180,120,20,0.08)}
+body.theme-light .ctab{background:rgba(255,240,200,0.8);color:#5c4a20}
+body.theme-light .bxs{background:rgba(255,240,200,0.8)}
+body.theme-light #scene-canvas{opacity:0.35}
+body.theme-solar #scene-canvas{opacity:0.7}
+body.theme-dark #scene-canvas{opacity:1}
+body.theme-ocean #scene-canvas{opacity:0.8}
+body.theme-ember #scene-canvas{opacity:0.9}
+body.theme-aurora #scene-canvas{opacity:0.9}
+body.theme-matrix #scene-canvas{opacity:0.5}
+body.theme-rose #scene-canvas{opacity:0.9}
+
+/* ── SIDEBAR THEME PALETTE SECTION ── */
+.sb-themes-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
+.sb-theme-swatch{
+  position:relative;border-radius:10px;overflow:hidden;cursor:pointer;
+  aspect-ratio:1;border:2px solid transparent;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:5px;
+}
+.sb-theme-swatch:hover{transform:scale(1.06);z-index:2}
+.sb-theme-swatch.active{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc),0 0 12px rgba(245,158,11,.4)}
+.sb-theme-swatch .sw-bg{position:absolute;inset:0}
+.sb-theme-swatch .sw-label{position:relative;font-size:8px;font-weight:700;color:rgba(255,255,255,.9);text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;text-shadow:0 1px 4px rgba(0,0,0,.8);text-align:center;line-height:1.2}
+.sb-theme-swatch .sw-dot{position:relative;width:8px;height:8px;border-radius:50%;margin-bottom:3px;border:1.5px solid rgba(255,255,255,.5)}
+.sw-check{position:absolute;top:4px;right:4px;width:14px;height:14px;border-radius:50%;background:var(--acc);color:#000;font-size:8px;display:none;align-items:center;justify-content:center;font-weight:900}
+.sb-theme-swatch.active .sw-check{display:flex}
+
+/* Colour customiser */
+.sb-color-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px}
+
+/* ── SITE DASHBOARD STYLES ── */
+.site-kpi-pill{display:flex;flex-direction:column;padding:8px 14px;background:var(--card2);border:1px solid var(--bdr);border-radius:10px;min-width:110px}
+.site-kpi-pill .lbl{font-size:8.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;font-family:'JetBrains Mono',monospace;margin-bottom:3px}
+.site-kpi-pill .val{font-size:18px;font-weight:800;letter-spacing:-0.04em;line-height:1}
+.site-kpi-pill .sub{font-size:9px;color:var(--t3);margin-top:2px}
+.device-row td{padding:8px 10px;font-size:11px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+.device-row:hover td{background:rgba(245,158,11,0.05)}
+.device-row:last-child td{border-bottom:none}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.status-ok{background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3)}
+.status-warn{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)}
+.status-err{background:rgba(244,114,182,0.15);color:#f472b6;border:1px solid rgba(244,114,182,0.3)}
+.status-warn .siren-icon,.status-err .siren-icon{animation:sirenPulse 1s ease-in-out infinite}
+@keyframes sirenPulse{0%,100%{opacity:1;filter:drop-shadow(0 0 3px currentColor)}50%{opacity:0.5;filter:none}}
+.stat-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.stat-item:last-child{border-bottom:none}
+.stat-lbl{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+.stat-val{font-size:12px;font-weight:700;color:var(--t1)}
+.site-list-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .15s;margin-bottom:4px}
+.site-list-item:hover{background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2)}
+.site-list-item.active{background:rgba(245,158,11,0.12);border-color:var(--acc)}
+.site-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.site-list-name{font-size:11px;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.site-list-kwh{font-size:10px;color:var(--acc);font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.site-list-pr{font-size:9px;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+/* Map styles */
+.map-marker{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:transform .15s}
+.map-marker:hover{transform:translate(-50%,-50%) scale(1.4)}
+
+.sb-color-item{display:flex;flex-direction:column;gap:3px}
+.sb-color-item label{font-size:9.5px;color:var(--t2);font-family:'JetBrains Mono',monospace}
+.sb-color-item input[type=color]{
+  width:100%;height:28px;border-radius:6px;border:1px solid var(--bdr2);
+  background:var(--card2);cursor:pointer;padding:2px 3px;
+}
+.sb-color-reset{width:100%;padding:5px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--acc);
+  font-family:'Outfit',sans-serif;transition:all .15s;margin-top:4px}
+.sb-color-reset:hover{background:rgba(245,158,11,.2)}
+
+/* Accent preview stripe */
+.sb-accent-preview{height:5px;border-radius:3px;margin-top:6px;transition:background .3s;
+  background:linear-gradient(90deg,var(--acc),var(--acc2))}
+
+/* Font size slider */
+.sb-slider{width:100%;accent-color:var(--acc);cursor:pointer}
+.sb-slider-row{display:flex;align-items:center;gap:8px}
+.sb-slider-val{font-size:11px;font-weight:700;color:var(--acc);min-width:28px;text-align:right;font-family:'JetBrains Mono',monospace}
+
+/* kpi-inner needs to not interfere with info-btn */
+.kpi-inner{padding:14px 14px 14px 14px;margin-top:32px}
+/* card-inner adjust */
+.card-inner{padding:40px 16px 16px 16px;display:flex;flex-direction:column;gap:9px}
+
+/* ══════════════════════════════════════════════
+   WELCOME SPLASH SCREEN
+══════════════════════════════════════════════ */
+#welcome-screen{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#040810;
+  transition:opacity .8s ease, transform .8s ease;
+  overflow:hidden;
+}
+#welcome-screen.hiding{opacity:0;transform:scale(1.04);pointer-events:none}
+#welcome-screen.hidden{display:none}
+
+/* Animated radial glow behind sun */
+.ws-glow{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-62%);
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle,rgba(251,191,36,0.18) 0%,rgba(251,100,36,0.08) 35%,transparent 70%);
+  animation:glowPulse 3s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes glowPulse{0%,100%{transform:translate(-50%,-62%) scale(1);opacity:.8}50%{transform:translate(-50%,-62%) scale(1.18);opacity:1}}
+
+/* Sun SVG container */
+.ws-sun{
+  position:relative;z-index:1;margin-bottom:14px;
+  animation:sunBounce 2.8s ease-in-out infinite;
+  filter:drop-shadow(0 0 32px rgba(251,191,36,.9)) drop-shadow(0 0 64px rgba(251,100,36,.5));
+}
+.ws-sun svg{display:block;}
+@keyframes sunBounce{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-14px) rotate(2deg)}}
+/* Sun ray spin */
+.sun-rays-outer{animation:raysSpinOuter 12s linear infinite;transform-origin:50% 50%}
+.sun-rays-inner{animation:raysSpinInner 8s linear infinite reverse;transform-origin:50% 50%}
+@keyframes raysSpinOuter{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes raysSpinInner{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+/* Specs hello glow */
+.sun-specs{animation:specsPulse 2s ease-in-out infinite}
+@keyframes specsPulse{0%,100%{opacity:1;filter:drop-shadow(0 0 3px #fff)}50%{opacity:.75;filter:drop-shadow(0 0 8px #ffd700)}}
+.sun-hello{animation:helloBounce 1.8s ease-in-out infinite}
+@keyframes helloBounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}70%{transform:translateY(2px)}}
+
+/* ── PAVAN KUMAR BRANDING ── */
+.ws-pavan{
+  position:absolute;bottom:52px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:10px;
+  opacity:0;animation:fadeInUp .9s 5s ease both;
+  z-index:10;white-space:nowrap;
+}
+.ws-pavan-logo{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#ff8c00,#ffd700,#ff4500);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 14px rgba(255,165,0,.7),0 0 28px rgba(255,100,0,.4);
+  animation:logoPulse 2.5s ease-in-out infinite;
+}
+@keyframes logoPulse{0%,100%{box-shadow:0 0 14px rgba(255,165,0,.7),0 0 28px rgba(255,100,0,.4)}50%{box-shadow:0 0 22px rgba(255,165,0,1),0 0 44px rgba(255,100,0,.7)}}
+.ws-pavan-text{display:flex;flex-direction:column;gap:1px}
+.ws-pavan-by{font-size:9px;color:rgba(245,158,11,.5);letter-spacing:.18em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.ws-pavan-name{font-size:14px;font-weight:800;letter-spacing:-.01em;font-family:'Outfit',sans-serif;
+  background:linear-gradient(90deg,#ffd700,#ff8c00,#ff4500,#ffd700);
+  background-size:300% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shimmer 3s linear infinite;
+}
+.ws-pavan-tagline{font-size:10px;color:rgba(241,245,249,.55);font-family:'JetBrains Mono',monospace;letter-spacing:.06em}
+.ws-pavan-tagline em{color:#34d399;font-style:normal;font-weight:700}
+.ws-pavan-divider{width:1px;height:30px;background:linear-gradient(to bottom,transparent,rgba(245,158,11,.4),transparent);margin:0 4px}
+
+/* Floating panel icons left & right */
+.ws-panels{
+  position:absolute;bottom:0;left:0;right:0;height:200px;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 60px;pointer-events:none;
+  overflow:hidden;
+}
+.ws-panel-row{display:flex;align-items:flex-end;gap:10px}
+.ws-panel-svg{animation:panelRise 1.4s ease-out both}
+.ws-panel-svg:nth-child(2){animation-delay:.15s}
+.ws-panel-svg:nth-child(3){animation-delay:.3s}
+.ws-panel-svg:nth-child(4){animation-delay:.45s}
+.ws-panel-svg.r{animation-delay:.2s}
+.ws-panel-svg.r:nth-child(2){animation-delay:.35s}
+.ws-panel-svg.r:nth-child(3){animation-delay:.5s}
+@keyframes panelRise{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+/* Stars layer */
+.ws-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.ws-star{position:absolute;border-radius:50%;background:#fff;animation:twinkle 2s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.2}50%{opacity:.9}}
+
+/* Brand name */
+.ws-brand{
+  font-family:'Outfit',sans-serif;
+  font-size:52px;font-weight:900;letter-spacing:-0.05em;
+  background:linear-gradient(135deg,#ffd700,#ff8c00,#ffb820,#ffd700);
+  background-size:200% 200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shimmer 3s linear infinite;
+  margin-bottom:8px;position:relative;z-index:1;
+}
+@keyframes shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+/* Tagline typing area */
+.ws-line{
+  font-family:'Outfit',sans-serif;
+  font-size:18px;font-weight:500;
+  color:#f1f5f9;
+  text-align:center;max-width:600px;
+  line-height:1.7;
+  min-height:62px;
+  position:relative;z-index:1;
+}
+.ws-line .hi{color:#fbbf24;font-weight:700}
+.ws-line .accent{color:#34d399;font-weight:700}
+.ws-cursor{
+  display:inline-block;width:2px;height:1.1em;
+  background:#fbbf24;margin-left:2px;vertical-align:text-bottom;
+  animation:cursorBlink .7s step-end infinite;
+}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Sub-tagline */
+.ws-sub{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:rgba(245,158,11,0.6);
+  letter-spacing:.18em;text-transform:uppercase;
+  margin-top:20px;opacity:0;
+  animation:fadeInUp .8s 3.6s ease both;
+  position:relative;z-index:1;
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Stats pills */
+.ws-pills{
+  display:flex;gap:14px;margin-top:22px;
+  opacity:0;animation:fadeInUp .8s 4s ease both;
+  position:relative;z-index:1;
+}
+.ws-pill{
+  padding:7px 18px;border-radius:24px;
+  background:rgba(245,158,11,0.1);
+  border:1px solid rgba(245,158,11,0.3);
+  font-size:12px;font-weight:600;color:#fbbf24;
+  font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:7px;
+}
+.ws-pill span{color:rgba(245,158,11,0.5);font-weight:400}
+
+/* Enter button */
+.ws-enter{
+  margin-top:32px;
+  padding:13px 44px;border-radius:50px;
+  background:linear-gradient(135deg,#f59e0b,#fb923c,#ff6b35);
+  border:none;cursor:pointer;
+  font-size:15px;font-weight:800;color:#000;
+  font-family:'Outfit',sans-serif;letter-spacing:0.02em;
+  box-shadow:0 0 28px rgba(245,158,11,0.55),0 4px 20px rgba(0,0,0,0.4);
+  transition:all .25s;
+  opacity:0;animation:fadeInUp .8s 4.4s ease both;
+  position:relative;z-index:1;
+}
+.ws-enter:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 0 44px rgba(245,158,11,0.8),0 6px 28px rgba(0,0,0,0.5)}
+.ws-enter:active{transform:scale(.97)}
+
+/* Bottom rays decoration */
+.ws-rays{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-62%);
+  width:800px;height:800px;pointer-events:none;
+  animation:raysRotate 20s linear infinite;
+}
+@keyframes raysRotate{from{transform:translate(-50%,-62%) rotate(0)}to{transform:translate(-50%,-62%) rotate(360deg)}}
+
+/* Scroll indicator */
+.ws-scroll{
+  position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
+  font-size:10px;color:rgba(245,158,11,0.4);letter-spacing:.15em;
+  text-transform:uppercase;font-family:'JetBrains Mono',monospace;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  opacity:0;animation:fadeInUp .8s 4.8s ease both;
+}
+.ws-arrow{animation:arrowBounce 1.2s ease-in-out infinite}
+@keyframes arrowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+</style>
+</head>
+<body>
+<canvas id="scene-canvas"></canvas>
+
+<!-- ══════════════════════════════════
+     WELCOME SPLASH SCREEN
+══════════════════════════════════ -->
+<div id="welcome-screen">
+
+  <!-- Background stars -->
+  <div class="ws-stars" id="wsStars"></div>
+
+  <!-- Rotating rays SVG -->
+  <svg class="ws-rays" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(400,400)">
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.08)" stroke-width="2"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.08)" stroke-width="2" transform="rotate(30)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.07)" stroke-width="2" transform="rotate(60)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.08)" stroke-width="2" transform="rotate(90)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.07)" stroke-width="2" transform="rotate(120)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.08)" stroke-width="2" transform="rotate(150)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.06)" stroke-width="2" transform="rotate(180)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.07)" stroke-width="2" transform="rotate(210)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.08)" stroke-width="2" transform="rotate(240)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.06)" stroke-width="2" transform="rotate(270)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.07)" stroke-width="2" transform="rotate(300)"/>
+      <line x1="0" y1="-340" x2="0" y2="-280" stroke="rgba(251,191,36,0.08)" stroke-width="2" transform="rotate(330)"/>
+    </g>
+  </svg>
+
+  <!-- Radial glow -->
+  <div class="ws-glow"></div>
+
+  <!-- AI-generated artistic sun with Hello specs -->
+  <div class="ws-sun">
+    <svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Main sun gradient -->
+        <radialGradient id="sunCore" cx="42%" cy="38%" r="58%">
+          <stop offset="0%" stop-color="#fffde0"/>
+          <stop offset="30%" stop-color="#FFE066"/>
+          <stop offset="65%" stop-color="#FFB800"/>
+          <stop offset="100%" stop-color="#FF6B00"/>
+        </radialGradient>
+        <!-- Cheek glow -->
+        <radialGradient id="cheekL" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FF8C42" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#FF8C42" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="cheekR" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FF8C42" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#FF8C42" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Corona glow -->
+        <radialGradient id="coronaGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="40%" stop-color="#FFD700" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="#FF6B00" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="3.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Corona background glow -->
+      <circle cx="90" cy="90" r="88" fill="url(#coronaGlow)"/>
+
+      <!-- Outer spinning rays -->
+      <g class="sun-rays-outer" style="transform-box:fill-box">
+        <g transform="translate(90,90)">
+          <!-- 12 long outer rays -->
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFD700" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFD700" stroke-width="3" stroke-linecap="round" opacity="0.7" transform="rotate(30)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFA500" stroke-width="2.5" stroke-linecap="round" opacity="0.6" transform="rotate(60)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFD700" stroke-width="3" stroke-linecap="round" opacity="0.7" transform="rotate(90)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFA500" stroke-width="2.5" stroke-linecap="round" opacity="0.6" transform="rotate(120)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFD700" stroke-width="3" stroke-linecap="round" opacity="0.7" transform="rotate(150)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFA500" stroke-width="2.5" stroke-linecap="round" opacity="0.6" transform="rotate(180)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFD700" stroke-width="3" stroke-linecap="round" opacity="0.7" transform="rotate(210)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFA500" stroke-width="2.5" stroke-linecap="round" opacity="0.6" transform="rotate(240)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFD700" stroke-width="3" stroke-linecap="round" opacity="0.7" transform="rotate(270)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFA500" stroke-width="2.5" stroke-linecap="round" opacity="0.6" transform="rotate(300)"/>
+          <line x1="0" y1="-82" x2="0" y2="-68" stroke="#FFD700" stroke-width="3" stroke-linecap="round" opacity="0.7" transform="rotate(330)"/>
+        </g>
+      </g>
+
+      <!-- Inner spinning rays (wavy) -->
+      <g class="sun-rays-inner" style="transform-box:fill-box">
+        <g transform="translate(90,90)">
+          <path d="M0,-64 Q2,-58 0,-52" stroke="#FFE566" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+          <path d="M0,-64 Q2,-58 0,-52" stroke="#FFE566" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8" transform="rotate(45)"/>
+          <path d="M0,-64 Q2,-58 0,-52" stroke="#FFCC22" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7" transform="rotate(90)"/>
+          <path d="M0,-64 Q2,-58 0,-52" stroke="#FFE566" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8" transform="rotate(135)"/>
+          <path d="M0,-64 Q2,-58 0,-52" stroke="#FFCC22" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7" transform="rotate(180)"/>
+          <path d="M0,-64 Q2,-58 0,-52" stroke="#FFE566" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8" transform="rotate(225)"/>
+          <path d="M0,-64 Q2,-58 0,-52" stroke="#FFCC22" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7" transform="rotate(270)"/>
+          <path d="M0,-64 Q2,-58 0,-52" stroke="#FFE566" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8" transform="rotate(315)"/>
+        </g>
+      </g>
+
+      <!-- Main sun disc -->
+      <circle cx="90" cy="90" r="50" fill="url(#sunCore)" filter="url(#glow)"/>
+
+      <!-- Surface texture rings -->
+      <circle cx="90" cy="90" r="48" fill="none" stroke="rgba(255,220,80,.18)" stroke-width="1.5"/>
+      <circle cx="90" cy="90" r="43" fill="none" stroke="rgba(255,180,0,.12)" stroke-width="1"/>
+
+      <!-- Cheek blush -->
+      <ellipse cx="67" cy="98" rx="11" ry="7" fill="url(#cheekL)" opacity="0.9"/>
+      <ellipse cx="113" cy="98" rx="11" ry="7" fill="url(#cheekR)" opacity="0.9"/>
+
+      <!-- Eyes (closed happy crescent) -->
+      <path d="M74 82 Q79 76 84 82" stroke="#7A3800" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <path d="M96 82 Q101 76 106 82" stroke="#7A3800" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+
+      <!-- Eye shine sparkles -->
+      <circle cx="80" cy="79" r="1.5" fill="white" opacity="0.9"/>
+      <circle cx="102" cy="79" r="1.5" fill="white" opacity="0.9"/>
+
+      <!-- Big happy smile -->
+      <path d="M72 100 Q90 118 108 100" stroke="#7A3800" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Smile teeth hint -->
+      <path d="M75 103 Q90 116 105 103" stroke="rgba(255,255,255,0.5)" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+      <!-- SPECTACLES / GLASSES -->
+      <g class="sun-specs" filter="url(#softGlow)">
+        <!-- Left lens frame -->
+        <rect x="62" y="83" width="22" height="14" rx="7" ry="7" fill="rgba(0,0,0,0.08)" stroke="#4a2000" stroke-width="1.8"/>
+        <!-- Right lens frame -->
+        <rect x="96" y="83" width="22" height="14" rx="7" ry="7" fill="rgba(0,0,0,0.08)" stroke="#4a2000" stroke-width="1.8"/>
+        <!-- Bridge -->
+        <line x1="84" y1="90" x2="96" y2="90" stroke="#4a2000" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- Left arm -->
+        <line x1="62" y1="90" x2="50" y2="88" stroke="#4a2000" stroke-width="1.6" stroke-linecap="round"/>
+        <!-- Right arm -->
+        <line x1="118" y1="90" x2="130" y2="88" stroke="#4a2000" stroke-width="1.6" stroke-linecap="round"/>
+        <!-- Lens tint -->
+        <rect x="63" y="84" width="20" height="12" rx="6" ry="6" fill="rgba(255,200,0,0.15)"/>
+        <rect x="97" y="84" width="20" height="12" rx="6" ry="6" fill="rgba(255,200,0,0.15)"/>
+        <!-- Lens glare -->
+        <ellipse cx="68" cy="87" rx="3.5" ry="2" fill="rgba(255,255,255,0.4)" transform="rotate(-20,68,87)"/>
+        <ellipse cx="102" cy="87" rx="3.5" ry="2" fill="rgba(255,255,255,0.4)" transform="rotate(-20,102,87)"/>
+      </g>
+
+      <!-- "Hello" speech bubble -->
+      <g class="sun-hello">
+        <!-- Bubble shape -->
+        <rect x="109" y="44" width="58" height="26" rx="12" fill="#FFFBE6" stroke="#FFB800" stroke-width="1.5"/>
+        <!-- Tail -->
+        <polygon points="118,70 126,70 120,78" fill="#FFFBE6" stroke="#FFB800" stroke-width="1" stroke-linejoin="round"/>
+        <!-- Hello text -->
+        <text x="138" y="62" font-family="'Outfit',Arial,sans-serif" font-size="13" font-weight="800" fill="#B35C00" text-anchor="middle" letter-spacing="0.5">Hello!</text>
+      </g>
+
+      <!-- Small sparkle stars around the sun -->
+      <g filter="url(#softGlow)" opacity="0.85">
+        <text x="24" y="55" font-size="11" fill="#FFD700">✦</text>
+        <text x="148" y="48" font-size="9" fill="#FFE066">✦</text>
+        <text x="16" y="118" font-size="8" fill="#FFA500">✧</text>
+        <text x="152" y="130" font-size="10" fill="#FFD700">✦</text>
+        <text x="82" y="18" font-size="7" fill="#FFE066">✦</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Brand -->
+  <div class="ws-brand">Sunfinity</div>
+
+  <!-- Typing message -->
+  <div class="ws-line" id="wsLine"><span id="wsTyped"></span><span class="ws-cursor" id="wsCursor"></span></div>
+
+  <!-- Sub-tagline -->
+  <div class="ws-sub">☀ Solar Intelligence Platform · March 2026 🔆</div>
+
+  <!-- Stats pills -->
+  <div class="ws-pills">
+    <div class="ws-pill">🏭 <span>Fleet</span> 86 Sites</div>
+    <div class="ws-pill">⚡ <span>Output</span> 3,254.9 MWh</div>
+    <div class="ws-pill">📊 <span>Avg PR</span> 77.6%</div>
+    <div class="ws-pill">🌤 <span>POA</span> 99.2 kWh/m²</div>
+  </div>
+
+  <!-- Enter button -->
+  <button class="ws-enter" id="wsEnterBtn" onclick="dismissWelcome()">
+    ☀ Launch Dashboard →
+  </button>
+
+  <!-- Solar panels bottom left & right -->
+  <div class="ws-panels">
+    <div class="ws-panel-row">
+      <svg class="ws-panel-svg" width="54" height="78" viewBox="0 0 54 78">
+        <rect x="0" y="18" width="54" height="36" rx="3" fill="#1a3a6e" stroke="#2a5ab8" stroke-width="1.5"/>
+        <rect x="2" y="20" width="50" height="32" rx="2" fill="#162d5a"/>
+        <line x1="18" y1="20" x2="18" y2="52" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="36" y1="20" x2="36" y2="52" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="31" x2="52" y2="31" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="42" x2="52" y2="42" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <ellipse cx="14" cy="26" rx="6" ry="3" fill="rgba(255,255,255,.1)" transform="rotate(-20,14,26)"/>
+        <rect x="23" y="54" width="8" height="16" rx="1" fill="#2a3a50"/>
+        <rect x="8" y="68" width="38" height="6" rx="2" fill="#1e2d40"/>
+      </svg>
+      <svg class="ws-panel-svg" width="54" height="68" viewBox="0 0 54 68">
+        <rect x="0" y="12" width="54" height="36" rx="3" fill="#1a3a6e" stroke="#2a5ab8" stroke-width="1.5"/>
+        <rect x="2" y="14" width="50" height="32" rx="2" fill="#162d5a"/>
+        <line x1="18" y1="14" x2="18" y2="46" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="36" y1="14" x2="36" y2="46" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="25" x2="52" y2="25" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="36" x2="52" y2="36" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <rect x="23" y="48" width="8" height="12" rx="1" fill="#2a3a50"/>
+        <rect x="8" y="58" width="38" height="6" rx="2" fill="#1e2d40"/>
+      </svg>
+      <svg class="ws-panel-svg" width="54" height="84" viewBox="0 0 54 84">
+        <rect x="0" y="22" width="54" height="36" rx="3" fill="#1a3a6e" stroke="#2a5ab8" stroke-width="1.5"/>
+        <rect x="2" y="24" width="50" height="32" rx="2" fill="#162d5a"/>
+        <line x1="18" y1="24" x2="18" y2="56" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="36" y1="24" x2="36" y2="56" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="35" x2="52" y2="35" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="46" x2="52" y2="46" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <ellipse cx="14" cy="30" rx="5" ry="3" fill="rgba(255,255,255,.1)" transform="rotate(-20,14,30)"/>
+        <rect x="23" y="58" width="8" height="18" rx="1" fill="#2a3a50"/>
+        <rect x="8" y="74" width="38" height="6" rx="2" fill="#1e2d40"/>
+      </svg>
+    </div>
+    <div class="ws-panel-row">
+      <svg class="ws-panel-svg r" width="54" height="72" viewBox="0 0 54 72">
+        <rect x="0" y="16" width="54" height="36" rx="3" fill="#1a3a6e" stroke="#2a5ab8" stroke-width="1.5"/>
+        <rect x="2" y="18" width="50" height="32" rx="2" fill="#162d5a"/>
+        <line x1="18" y1="18" x2="18" y2="50" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="36" y1="18" x2="36" y2="50" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="29" x2="52" y2="29" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="40" x2="52" y2="40" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <rect x="23" y="52" width="8" height="12" rx="1" fill="#2a3a50"/>
+        <rect x="8" y="62" width="38" height="6" rx="2" fill="#1e2d40"/>
+      </svg>
+      <svg class="ws-panel-svg r" width="54" height="86" viewBox="0 0 54 86">
+        <rect x="0" y="24" width="54" height="36" rx="3" fill="#1a3a6e" stroke="#2a5ab8" stroke-width="1.5"/>
+        <rect x="2" y="26" width="50" height="32" rx="2" fill="#162d5a"/>
+        <line x1="18" y1="26" x2="18" y2="58" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="36" y1="26" x2="36" y2="58" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="37" x2="52" y2="37" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="48" x2="52" y2="48" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <ellipse cx="40" cy="32" rx="5" ry="3" fill="rgba(255,255,255,.1)" transform="rotate(-20,40,32)"/>
+        <rect x="23" y="60" width="8" height="18" rx="1" fill="#2a3a50"/>
+        <rect x="8" y="76" width="38" height="6" rx="2" fill="#1e2d40"/>
+      </svg>
+      <svg class="ws-panel-svg r" width="54" height="66" viewBox="0 0 54 66">
+        <rect x="0" y="10" width="54" height="36" rx="3" fill="#1a3a6e" stroke="#2a5ab8" stroke-width="1.5"/>
+        <rect x="2" y="12" width="50" height="32" rx="2" fill="#162d5a"/>
+        <line x1="18" y1="12" x2="18" y2="44" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="36" y1="12" x2="36" y2="44" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="23" x2="52" y2="23" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <line x1="2" y1="34" x2="52" y2="34" stroke="rgba(100,150,255,.3)" stroke-width=".8"/>
+        <rect x="23" y="46" width="8" height="12" rx="1" fill="#2a3a50"/>
+        <rect x="8" y="56" width="38" height="6" rx="2" fill="#1e2d40"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Powered by Pavan Kumar branding -->
+  <div class="ws-pavan">
+    <!-- Logo mark -->
+    <div class="ws-pavan-logo">
+      <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+        <!-- Lightning bolt inside sun shape -->
+        <circle cx="10" cy="10" r="9" fill="rgba(0,0,0,0.18)"/>
+        <!-- Sun mini rays -->
+        <g stroke="rgba(255,255,255,0.7)" stroke-width="1.2" stroke-linecap="round">
+          <line x1="10" y1="1.5" x2="10" y2="3.5"/>
+          <line x1="10" y1="16.5" x2="10" y2="18.5"/>
+          <line x1="1.5" y1="10" x2="3.5" y2="10"/>
+          <line x1="16.5" y1="10" x2="18.5" y2="10"/>
+          <line x1="3.6" y1="3.6" x2="5" y2="5"/>
+          <line x1="15" y1="15" x2="16.4" y2="16.4"/>
+          <line x1="16.4" y1="3.6" x2="15" y2="5"/>
+          <line x1="5" y1="15" x2="3.6" y2="16.4"/>
+        </g>
+        <!-- Lightning bolt -->
+        <path d="M11.5 3.5 L7.5 11 L10.5 11 L8.5 17 L13.5 9 L10.5 9 Z" fill="white" opacity="0.95"/>
+      </svg>
+    </div>
+    <div class="ws-pavan-divider"></div>
+    <div class="ws-pavan-text">
+      <span class="ws-pavan-by">Powered by</span>
+      <span class="ws-pavan-name">Pavan Kumar</span>
+      <span class="ws-pavan-tagline">Making Solar <em>Roar</em> ⚡</span>
+    </div>
+  </div>
+
+  <!-- Scroll hint -->
+  <div class="ws-scroll">
+    <span>or scroll to enter</span>
+    <span class="ws-arrow">↓</span>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- SIDEBAR -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sb-hdr"><span class="sb-tit">🎨 Customize Dashboard</span><button class="sb-x" onclick="closeSidebar()">✕</button></div>
+  <div class="sb-body">
+
+    <!-- ── THEMES ── -->
+    <div class="sb-sec">
+      <div class="sb-sec-t">🎨 Themes</div>
+      <div class="sb-themes-grid" id="sbThemesGrid">
+        <!-- swatches injected by JS -->
+      </div>
+    </div>
+
+    <!-- ── COLOURS ── -->
+    <div class="sb-sec">
+      <div class="sb-sec-t">🖌 Accent Colours</div>
+      <div class="sb-accent-preview" id="accentPreview"></div>
+      <div class="sb-color-grid">
+        <div class="sb-color-item">
+          <label>Primary Accent</label>
+          <input type="color" id="cp-acc" value="#f59e0b" oninput="liveColor('acc',this.value)">
+        </div>
+        <div class="sb-color-item">
+          <label>Secondary Accent</label>
+          <input type="color" id="cp-acc2" value="#fb923c" oninput="liveColor('acc2',this.value)">
+        </div>
+        <div class="sb-color-item">
+          <label>Background</label>
+          <input type="color" id="cp-bg" value="#060d18" oninput="liveColor('bg',this.value)">
+        </div>
+        <div class="sb-color-item">
+          <label>Card Background</label>
+          <input type="color" id="cp-card" value="#0f1c2e" oninput="liveColor('card',this.value)">
+        </div>
+        <div class="sb-color-item">
+          <label>Text Primary</label>
+          <input type="color" id="cp-t1" value="#f1f5f9" oninput="liveColor('t1',this.value)">
+        </div>
+        <div class="sb-color-item">
+          <label>Text Secondary</label>
+          <input type="color" id="cp-t2" value="#94a3b8" oninput="liveColor('t2',this.value)">
+        </div>
+      </div>
+      <button class="sb-color-reset" onclick="resetColors()">↺ Reset to Theme Defaults</button>
+    </div>
+
+    <!-- ── UI SCALE ── -->
+    <div class="sb-sec">
+      <div class="sb-sec-t">⚙ UI Scale</div>
+      <div class="sb-row"><label>Font Size</label>
+        <div class="sb-slider-row">
+          <input type="range" class="sb-slider" id="sb-fontsize" min="10" max="16" step="1" value="13" oninput="document.body.style.fontSize=this.value+'px';document.getElementById('sb-fsval').textContent=this.value+'px'">
+          <span class="sb-slider-val" id="sb-fsval">13px</span>
+        </div>
+      </div>
+      <div class="sb-row"><label>Border Radius</label>
+        <div class="sb-slider-row">
+          <input type="range" class="sb-slider" id="sb-radius" min="0" max="24" step="2" value="16" oninput="applyRadius(this.value);document.getElementById('sb-rxval').textContent=this.value+'px'">
+          <span class="sb-slider-val" id="sb-rxval">16px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PERIOD & GRANULARITY ── -->
+    <div class="sb-sec">
+      <div class="sb-sec-t">📅 Period & Granularity</div>
+      <div class="sb-row"><label>Granularity</label><select id="sb-gran" onchange="setGran(this.value)"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-t">⚡ Plant Parameters</div>
+      <div class="sb-row"><label>Installed Capacity (kW)</label><input type="number" id="sb-cap" value="1600.5" step="0.1" onchange="updateCap(this.value)"></div>
+      <div class="sb-row"><label>PR Target (%)</label><input type="number" id="sb-prtarget" value="75" min="0" max="100" onchange="updatePRTarget(this.value)"></div>
+
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-t">🏭 Project Info</div>
+      <div class="sb-row"><label>Project Name</label><input type="text" id="sb-projname" value="Tri-Force Energy Portfolio" onchange="updateProjectName(this.value)"></div>
+      <div class="sb-row"><label>No. of Sites</label><input type="number" id="sb-sites" value="86" onchange="updateSiteCount(this.value)"></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-t">📊 Visible Panels</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--t2)">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="chk-gen" checked onchange="togglePanel('pg-gen',this.checked)"> Generation Trend</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="chk-pr" checked onchange="togglePanel('pg-pr',this.checked)"> Performance Ratio</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="chk-cuf" checked onchange="togglePanel('pg-cuf',this.checked)"> CUF Trend</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="chk-irr" checked onchange="togglePanel('pg-irr',this.checked)"> Irradiation</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="chk-loss" checked onchange="togglePanel('pg-loss',this.checked)"> Curtailment</label>
+      </div>
+    </div>
+  </div>
+  <div class="sb-foot">
+    <button class="sbb p" onclick="applySettings()">✓ Apply</button>
+    <button class="sbb s" onclick="location.reload()">↺ Reset</button>
+  </div>
+</div>
+
+<!-- TOPNAV -->
+<div class="tnav">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="brand">
+      <div class="brand-sun">☀</div>
+      <div><div class="brand-name">Sunfinity</div><div class="brand-sub" id="navSub">☀ Tri-Force Energy · 🔆 86 Sites</div></div>
+    </div>
+    <div style="width:1px;height:24px;background:rgba(255,255,255,0.08)"></div>
+    <div class="nav-pills">
+      <button class="npill on" onclick="showView('overview',this)">Overview</button>
+      <button class="npill" onclick="showView('sitedash',this)">Site Wise Dashboard</button>
+      <button class="npill" onclick="showView('mapview',this)">🗺 Map View</button>
+    </div>
+  </div>
+  <div class="nav-r">
+    <span class="nbadge" id="topBadge">March 2026</span>
+    <div class="live"><span class="ldot"></span><span id="siteCountLbl">86 Sites Active</span></div>
+    <div class="theme-wrap">
+  <button class="theme-btn" id="tbtn-dark" onclick="setTheme('dark')" title="Dark theme">🌙</button>
+  <button class="theme-btn active" id="tbtn-solar" onclick="setTheme('solar')" title="Solar theme">☀️</button>
+  <button class="theme-btn" id="tbtn-light" onclick="setTheme('light')" title="Light theme">🌤</button>
+</div>
+<button class="sbtn" onclick="openSidebar()">🎨 Customize</button>
+  </div>
+</div>
+
+<!-- AGS BRANDING BANNER -->
+<div class="ags-banner">
+  <div class="ags-left">
+    <div class="ags-logo-wrap">🌿</div>
+    <div class="ags-text-block">
+      <div class="ags-name">AGS</div>
+      <div class="ags-fullname">American Green Solutions</div>
+    </div>
+    <div class="ags-divider"></div>
+    <div class="ags-tagline-wrap">
+      <div class="ags-caption-rotator" id="agsCaptionRotator">
+        <div class="ags-caption-item active" data-idx="0">
+          <span class="cap-emoji">☀️</span>
+          <span class="cap-text"><em>Irradiance</em> is the secret of our energy</span>
+        </div>
+        <div class="ags-caption-item" data-idx="1">
+          <span class="cap-emoji">🌿</span>
+          <span class="cap-text">Powering a <b>Greener Tomorrow</b>, one photon at a time</span>
+        </div>
+        <div class="ags-caption-item" data-idx="2">
+          <span class="cap-emoji">⚡</span>
+          <span class="cap-text">From sunlight to kilowatts — <em>clean, precise, relentless</em></span>
+        </div>
+        <div class="ags-caption-item" data-idx="3">
+          <span class="cap-emoji">🌍</span>
+          <span class="cap-text">Every MWh harvested is <b>2,295 tonnes of CO₂</b> not emitted</span>
+        </div>
+        <div class="ags-caption-item" data-idx="4">
+          <span class="cap-emoji">📡</span>
+          <span class="cap-text"><em>Smart monitoring</em> · 86 sites · real-time solar intelligence</span>
+        </div>
+        <div class="ags-caption-item" data-idx="5">
+          <span class="cap-emoji">🏆</span>
+          <span class="cap-text">Chasing <b>peak performance</b> — 85.1% PR on our best day</span>
+        </div>
+        <div class="ags-caption-item" data-idx="6">
+          <span class="cap-emoji">🔆</span>
+          <span class="cap-text">The sun never sends a bill — <em>we just collect its gift</em></span>
+        </div>
+        <div class="ags-caption-item" data-idx="7">
+          <span class="cap-emoji">🌱</span>
+          <span class="cap-text"><b>American Green Solutions</b> — sustainability is not a goal, it's our foundation</span>
+        </div>
+      </div>
+      <div class="ags-caption-dots" id="agsDots">
+        <div class="ags-dot on" onclick="goCaption(0)"></div>
+        <div class="ags-dot" onclick="goCaption(1)"></div>
+        <div class="ags-dot" onclick="goCaption(2)"></div>
+        <div class="ags-dot" onclick="goCaption(3)"></div>
+        <div class="ags-dot" onclick="goCaption(4)"></div>
+        <div class="ags-dot" onclick="goCaption(5)"></div>
+        <div class="ags-dot" onclick="goCaption(6)"></div>
+        <div class="ags-dot" onclick="goCaption(7)"></div>
+      </div>
+    </div>
+  </div>
+  <div class="ags-right">
+    <div class="ags-badge green"><span class="ags-solar-dot"></span> Fleet Active</div>
+    <div class="ags-badge amber">☀ 86 Sites Online</div>
+    <div class="ags-badge blue">🌱 2,295 t CO₂ Saved</div>
+  </div>
+</div>
+
+
+<div class="cbar">
+  <div class="cs">
+    <span class="clbl">Granularity</span>
+    <div class="ctabs">
+      <div class="ctab on" id="gran-daily" onclick="setGran('daily')">Daily</div>
+      <div class="ctab" id="gran-weekly" onclick="setGran('weekly')">Weekly</div>
+      <div class="ctab" id="gran-monthly" onclick="setGran('monthly')">Monthly</div>
+    </div>
+  </div>
+  <div class="cs">
+    <span class="clbl">Metric</span>
+    <div class="ctabs">
+      <div class="ctab on" id="met-energy" onclick="setMetric('energy')">Energy (MWh)</div>
+      <div class="ctab" id="met-pr" onclick="setMetric('pr')">PR %</div>
+      <div class="ctab" id="met-cuf" onclick="setMetric('cuf')">CUF %</div>
+      <div class="ctab" id="met-poa" onclick="setMetric('poa')">Irradiation</div>
+    </div>
+  </div>
+  <div class="cs">
+    <span class="clbl">Chart</span>
+    <div class="ctabs">
+      <div class="ctab on" id="ct-bar" onclick="setChartType('bar')">Bar</div>
+      <div class="ctab" id="ct-line" onclick="setChartType('line')">Line</div>
+      <div class="ctab" id="ct-area" onclick="setChartType('area')">Area</div>
+    </div>
+  </div>
+  <div class="cs">
+    <span class="clbl">PR Target</span>
+    <input class="cfield" type="number" id="ctrl-pr" value="75" min="0" max="100" onchange="updatePRTarget(this.value)" style="width:55px">
+    <span style="font-size:9px;color:var(--t3)">%</span>
+  </div>
+  <div class="cs">
+    <span class="clbl">Capacity kW</span>
+    <input class="cfield" type="number" id="ctrl-cap" value="1600.5" onchange="updateCap(this.value)" style="width:82px">
+  </div>
+  <div class="cs">
+    <span class="clbl">Sites</span>
+    <select class="cfield" style="width:110px">
+      <option>All Sites (86)</option>
+      <option>Top 10</option>
+      <option>Underperforming</option>
+    </select>
+  </div>
+</div>
+
+<!-- ══ KPI CARDS ══ -->
+<div class="section-label">☀ Key Performance Indicators · Solar Fleet · March 2026 🌤</div>
+<div class="kpi-section" style="padding-top:14px">
+<div class="kpi-grid">
+
+<!-- KPI 1: Total Generation -->
+<div class="kpi-card ck1">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop0">📖</button>
+<div class="info-pop" id="pop0">
+  <div class="pop-head"><span class="pop-icon">⚡</span><span class="pop-title">Total Generation</span><button class="pop-close" onclick="closePop('pop0')">✕</button></div>
+  <div class="pop-body">
+    ⚡ <b>What it means:</b> The total electrical energy produced by all 86 solar sites combined during the selected period.<br><br>
+    🔌 <b>Source:</b> Sum of daily meter readings from every inverter across the entire fleet.<br><br>
+    📐 <b>Unit:</b> MWh (Megawatt-hours) — 1 MWh powers ~330 homes for a day.<br><br>
+    🌱 <b>Impact:</b> Every MWh offsets ~0.7 tonnes of CO₂ from the grid.
+    <div class="pop-formula">Σ(Site₁..₈₆ × Daily kWh) ÷ 1000 = MWh</div>
+  </div>
+</div>
+      <div class="kpi-inner">
+    <span class="kpi-icon">⚡</span>
+    <div class="kpi-label">⚡ Total Generation</div>
+    <div class="kpi-value" id="kv-gen" style="color:#f59e0b">3,254.9<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">MWh</span></div>
+    <div class="kpi-sub">March 2026 · 86 sites</div>
+  </div>
+</div>
+
+<!-- KPI 2: Performance Ratio -->
+<div class="kpi-card ck2">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop1">📖</button>
+<div class="info-pop" id="pop1">
+  <div class="pop-head"><span class="pop-icon">📊</span><span class="pop-title">Performance Ratio</span><button class="pop-close" onclick="closePop('pop1')">✕</button></div>
+  <div class="pop-body">
+    📊 <b>What it means:</b> How efficiently the solar plant converts available sunlight into electricity. A higher PR means less energy is lost to heat, soiling, and system inefficiencies.<br><br>
+    🎯 <b>Target:</b> 75% is the benchmark. Above 80% is excellent; below 65% signals problems.<br><br>
+    🌡️ <b>Factors affecting PR:</b> Panel temperature, soiling, shading, inverter losses, and wiring resistance.<br><br>
+    ✅ <b>Good range:</b> 75–85% for utility-scale solar plants.
+    <div class="pop-formula">PR = E_ac ÷ (G_poa × Capacity_kWp)</div>
+  </div>
+</div>
+      <div class="kpi-inner">
+    <span class="kpi-icon">📊</span>
+    <div class="kpi-label">📊 Performance Ratio</div>
+    <div class="kpi-value" id="kv-pr" style="color:#60a5fa">77.6<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">%</span></div>
+    <div class="kpi-sub up" id="ks-pr">✓ 2.6pp above 75% target</div>
+  </div>
+</div>
+
+<!-- KPI 3: CUF -->
+<div class="kpi-card ck3">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop2">📖</button>
+<div class="info-pop" id="pop2">
+  <div class="pop-head"><span class="pop-icon">🔋</span><span class="pop-title">Capacity Utilization Factor</span><button class="pop-close" onclick="closePop('pop2')">✕</button></div>
+  <div class="pop-body">
+    🔋 <b>What it means:</b> The percentage of time the plant is generating at its full rated capacity. Reflects how productively the installed capacity is being used.<br><br>
+    ☀️ <b>Solar context:</b> Solar CUF is naturally limited by daylight hours (~12–16% min, 25–30% max for ground-mount). Monsoon months typically lower CUF.<br><br>
+    📉 <b>Low CUF causes:</b> Cloudy days, grid curtailment, equipment downtime, seasonal variation.<br><br>
+    🏆 <b>Benchmark:</b> 20–28% CUF is excellent for Indian solar plants.
+    <div class="pop-formula">CUF = E_actual ÷ (Cap_kW × 8760 hrs/yr)</div>
+  </div>
+</div>
+      <div class="kpi-inner">
+    <span class="kpi-icon">🔋</span>
+    <div class="kpi-label">🔋 Capacity Utilization</div>
+    <div class="kpi-value" id="kv-cuf" style="color:#34d399">24.4<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">%</span></div>
+    <div class="kpi-sub" id="ks-cuf">CUF · 1,600.5 kW installed</div>
+  </div>
+</div>
+
+<!-- KPI 4: Availability -->
+<div class="kpi-card ck4">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop3">📖</button>
+<div class="info-pop" id="pop3">
+  <div class="pop-head"><span class="pop-icon">🌐</span><span class="pop-title">Plant Availability</span><button class="pop-close" onclick="closePop('pop3')">✕</button></div>
+  <div class="pop-body">
+    🌐 <b>What it means:</b> The proportion of daylight hours during which the plant was operational and capable of generating power. Downtime includes inverter faults, grid disconnections, and maintenance.<br><br>
+    ⚙️ <b>SLA target:</b> 95% is the contractual minimum for most PPAs. Below 90% triggers penalties.<br><br>
+    🚨 <b>Current status:</b> 71.7% indicates significant downtime — investigation recommended!<br><br>
+    🔧 <b>Causes of downtime:</b> Inverter trips, communication failures, grid outages, manual shutdowns.
+    <div class="pop-formula">Avail% = 1 − (Downtime_hrs ÷ Total_daylight_hrs)</div>
+  </div>
+</div>
+      <div class="kpi-inner">
+    <span class="kpi-icon">🌐</span>
+    <div class="kpi-label">🌐 Availability</div>
+    <div class="kpi-value" id="kv-avail" style="color:#f472b6">71.7<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">%</span></div>
+    <div class="kpi-sub dn">↓ 23.3pp below 95% SLA target</div>
+  </div>
+</div>
+
+<!-- KPI 5: Irradiation -->
+<div class="kpi-card ck5">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop4">📖</button>
+<div class="info-pop" id="pop4">
+  <div class="pop-head"><span class="pop-icon">☀️</span><span class="pop-title">Total Irradiation — The Secret of Our Energy</span><button class="pop-close" onclick="closePop('pop4')">✕</button></div>
+  <div class="pop-body">
+    🌞 <b>Irradiance vs Irradiation:</b> Irradiance (W/m²) is the instantaneous solar power hitting the panel. Irradiation (kWh/m²) is that power accumulated over time — the true energy input to our system.<br><br>
+    🔭 <b>Measurement:</b> Captured by pyranometers mounted at panel tilt (POA = Plane Of Array), giving the most accurate real-world solar resource reading.<br><br>
+    💡 <b>Why it matters:</b> Irradiation is the fundamental input that drives ALL energy production. Higher irradiation = more potential output. Low PR despite high irradiation signals losses in the system.<br><br>
+    🌡️ <b>Seasonal range:</b> 90–150 kWh/m²/month typical across NJ/NY/PA.
+    <div class="pop-formula">H_poa = ∫G_poa dt  (kWh/m²) — The Secret of Our Energy ☀</div>
+  </div>
+</div>
+      <div class="kpi-inner">
+    <span class="kpi-icon">☀</span>
+    <div class="kpi-label">☀ Total Irradiation</div>
+    <div class="kpi-value" id="kv-irr" style="color:#fbbf24">99.2<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">kWh/m²</span></div>
+    <div class="kpi-sub">POA · March 2026</div>
+  </div>
+</div>
+
+<!-- KPI 6: Curtailment -->
+<div class="kpi-card ck6">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop5">📖</button>
+<div class="info-pop" id="pop5">
+  <div class="pop-head"><span class="pop-icon">⚠️</span><span class="pop-title">Curtailment Loss</span><button class="pop-close" onclick="closePop('pop5')">✕</button></div>
+  <div class="pop-body">
+    ⚠️ <b>What it means:</b> Energy the plant could have generated but was deliberately withheld — usually due to grid operator instructions when the local grid cannot absorb more power.<br><br>
+    💸 <b>Financial impact:</b> Curtailed energy = lost revenue. Each MWh curtailed costs the project owner the PPA rate (~$40–80/MWh).<br><br>
+    📡 <b>Common causes:</b> Grid congestion, high renewable penetration, low demand periods, transmission constraints.<br><br>
+    📅 <b>This month:</b> Curtailment events occurred on Mar 1–3 only — grid stress events.
+    <div class="pop-formula">Curtailment = Σ(P_available × t_curtailed_hrs)</div>
+  </div>
+</div>
+      <div class="kpi-inner">
+    <span class="kpi-icon">⚠</span>
+    <div class="kpi-label">⚠ Curtailment Loss</div>
+    <div class="kpi-value" id="kv-curt" style="color:#a78bfa">1.65<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">MWh</span></div>
+    <div class="kpi-sub">Month total · Mar 1–3 only</div>
+  </div>
+</div>
+
+<!-- KPI 7: Peak Day -->
+<div class="kpi-card ck7">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop6">📖</button>
+<div class="info-pop" id="pop6">
+  <div class="pop-head"><span class="pop-icon">🏆</span><span class="pop-title">Peak Day Output</span><button class="pop-close" onclick="closePop('pop6')">✕</button></div>
+  <div class="pop-body">
+    🏆 <b>What it means:</b> The single best day of the month — when all 86 sites fired at maximum capacity under optimal weather conditions.<br><br>
+    ☀️ <b>Peak conditions:</b> Clear sky, low temperature, low humidity, and minimal soiling combine to push output to its maximum.<br><br>
+    📈 <b>Benchmark use:</b> Peak day output helps estimate the plant's theoretical maximum and validates irradiation models.<br><br>
+    🗓️ <b>Mar 24 was exceptional:</b> Clear sky, low wind, cold temperatures — perfect solar conditions!
+    <div class="pop-formula">Peak = max(Σ all sites per calendar day)</div>
+  </div>
+</div>
+      <div class="kpi-inner">
+    <span class="kpi-icon">🏆</span>
+    <div class="kpi-label">🏆 Peak Day Output</div>
+    <div class="kpi-value" id="kv-peak" style="color:#38bdf8">172.9<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">MWh</span></div>
+    <div class="kpi-sub" id="ks-peak">Mar 24 — best day of March</div>
+  </div>
+</div>
+
+<!-- KPI 8: Best PR Day -->
+<div class="kpi-card ck8">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop7">📖</button>
+<div class="info-pop" id="pop7">
+  <div class="pop-head"><span class="pop-icon">🎯</span><span class="pop-title">Best PR Day</span><button class="pop-close" onclick="closePop('pop7')">✕</button></div>
+  <div class="pop-body">
+    🎯 <b>What it means:</b> The day when the fleet achieved its highest efficiency — maximum conversion of available sunlight to electricity with minimal losses.<br><br>
+    🌤️ <b>Why some days have higher PR:</b> Cooler temperatures reduce panel resistance, lower soiling accumulation, and minimal inverter cycling all boost PR.<br><br>
+    🔬 <b>Diagnostic value:</b> Comparing best PR day to average helps quantify recoverable losses from soiling, temperature, and shading.<br><br>
+    ⭐ <b>85.1% on Mar 24:</b> World-class performance — close to theoretical maximum!
+    <div class="pop-formula">PR_day = E_ac ÷ (H_poa × P_installed_kWp)</div>
+  </div>
+</div>
+      <div class="kpi-inner">
+    <span class="kpi-icon">🎯</span>
+    <div class="kpi-label">🎯 Best PR Day</div>
+    <div class="kpi-value" id="kv-bestpr" style="color:#a3e635">85.1<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">%</span></div>
+    <div class="kpi-sub" id="ks-bestpr">Mar 24 · clear sky conditions</div>
+  </div>
+</div>
+
+</div><!-- kpi-grid -->
+</div><!-- kpi-section -->
+
+<!-- ══ MAIN CHART GRID ══ -->
+<div class="section-label">🔆 Charts & Analytics · 🌤 Click 📖 on any card for full description with emoji insights</div>
+<div class="main-grid">
+
+<!-- Generation Chart -->
+<div class="card-wrap" style="grid-column:span 2" id="pg-gen">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop8">📖</button>
+<div class="info-pop" id="pop8">
+  <div class="pop-head"><span class="pop-icon">⚡</span><span class="pop-title">Energy Generation Trend</span><button class="pop-close" onclick="closePop('pop8')">✕</button></div>
+  <div class="pop-body">
+    📊 <b>Chart breakdown:</b> Each bar = total MWh produced by all 86 sites on that day. The amber line is the 7-day rolling average to smooth weather noise. The dashed green line is POA irradiance overlay.<br><br>
+    📈 <b>How to read it:</b> Bars above the moving average = above-average days. Dips coincide with cloud cover or equipment issues.<br><br>
+    🌤️ <b>POA overlay:</b> When energy bars track closely with the irradiance line, your PR is stable. A divergence = system loss or degradation event.<br><br>
+    🔢 <b>Switch views:</b> Bar for totals, Line for trends, Area for visual impact.
+    <div class="pop-formula">Day Total MWh = Σ(All Site kWh) ÷ 1000</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph">
+      <div><div class="pt">☀ Energy Generation Trend ⚡</div><div class="pm" id="gen-meta">MWh/day · 7-day avg · POA overlay · March 2026</div></div>
+      <div class="pact">
+        <button class="bxs on" id="gb-bar" onclick="setMainChart('bar',this)">Bar</button>
+        <button class="bxs" id="gb-line" onclick="setMainChart('line',this)">Line</button>
+        <button class="bxs" id="gb-area" onclick="setMainChart('area',this)">Area</button>
+      </div>
+    </div>
+    <div class="leg">
+      <span class="li"><span class="lsq" style="background:#f59e0b"></span>Generation</span>
+      <span class="li"><span class="lln" style="background:#fbbf24"></span>7-day avg</span>
+      <span class="li"><span class="ldsh" style="border-color:#34d399"></span>POA irradiance</span>
+    </div>
+    <div class="cw h220"><canvas id="genChart" role="img" aria-label="Daily energy generation bar chart for March 2026 showing fleet total MWh per day"></canvas></div>
+  </div>
+</div>
+
+<!-- Site Rankings -->
+<div class="card-wrap tall" id="pg-sites">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop9">📖</button>
+<div class="info-pop" id="pop9">
+  <div class="pop-head"><span class="pop-icon">🏅</span><span class="pop-title">Site Rankings</span><button class="pop-close" onclick="closePop('pop9')">✕</button></div>
+  <div class="pop-body">
+    🏅 <b>Top performers:</b> Ranked by monthly MWh output. Large-capacity sites naturally generate more — check the PR bar to gauge true efficiency relative to their size.<br><br>
+    🟢 <b>Green bars (≥80% PR):</b> Excellent — site is operating near theoretical maximum.<br><br>
+    🟡 <b>Amber bars (65–79% PR):</b> Good — room for improvement via cleaning or maintenance.<br><br>
+    🔴 <b>Red bars (&lt;65% PR):</b> Alert! Likely inverter fault, soiling, or shading issue. Requires field investigation.<br><br>
+    📋 <b>Underperforming list:</b> Sites with &lt;65% PR flagged for immediate O&M action.
+    <div class="pop-formula">PR bar width = Site_avg_PR ÷ 100 × max_bar_width</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div class="pt">🌞 Site Rankings 🏅</div><div class="pm">March 2026 · MWh</div></div>
+    <div style="overflow-y:auto;flex:1">
+      <table class="stbl"><thead><tr><th>#</th><th>Site</th><th style="text-align:right">MWh</th><th style="text-align:right">PR</th></tr></thead>
+      <tbody id="topTbl"></tbody></table>
+    </div>
+    <div class="ph" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(245,158,11,0.1)">
+      <div class="pt" style="color:#f472b6">⚠ Underperforming Sites</div>
+    </div>
+    <div style="overflow-y:auto">
+      <table class="stbl"><thead><tr><th>#</th><th>Site</th><th style="text-align:right">kWh</th></tr></thead>
+      <tbody id="botTbl"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- PR Chart -->
+<div class="card-wrap" id="pg-pr">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop10">📖</button>
+<div class="info-pop" id="pop10">
+  <div class="pop-head"><span class="pop-icon">📈</span><span class="pop-title">Performance Ratio Trend</span><button class="pop-close" onclick="closePop('pop10')">✕</button></div>
+  <div class="pop-body">
+    📈 <b>What this chart shows:</b> Fleet-wide daily PR averaged across all 86 sites. The pink dashed line is your 75% SLA target.<br><br>
+    📉 <b>PR dips:</b> Sudden single-day drops indicate inverter trips or sensor errors. Gradual decline over weeks suggests panel soiling or degradation.<br><br>
+    🌡️ <b>Seasonal effect:</b> PR tends to be higher in cooler months (Mar, Oct–Nov) and lower in summer due to panel temperature coefficients.<br><br>
+    🎯 <b>Optimization tip:</b> Sites consistently below target need soiling loss analysis and cleaning schedules.
+    <div class="pop-formula">Fleet PR = E_ac_total ÷ (H_poa × Σ P_peak_sites)</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div><div class="pt">📈 Performance Ratio 🔆</div><div class="pm">Daily PR % vs target</div></div></div>
+    <div class="leg"><span class="li"><span class="lln" style="background:#60a5fa"></span>PR %</span><span class="li" id="leg-prtarget"><span class="ldsh" style="border-color:#f472b6"></span>Target</span></div>
+    <div class="cw h160"><canvas id="prChart" role="img" aria-label="Daily performance ratio trend for March 2026"></canvas></div>
+  </div>
+</div>
+
+<!-- CUF Chart -->
+<div class="card-wrap" id="pg-cuf">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop11">📖</button>
+<div class="info-pop" id="pop11">
+  <div class="pop-head"><span class="pop-icon">🔋</span><span class="pop-title">Capacity Utilization Factor Trend</span><button class="pop-close" onclick="closePop('pop11')">✕</button></div>
+  <div class="pop-body">
+    🔋 <b>Daily CUF bars:</b> Each bar shows what fraction of installed capacity (1,600 kW) was actually used that day versus if it ran at full power all 24 hours.<br><br>
+    🌙 <b>Why CUF is always &lt;30%:</b> Solar panels only generate during daylight (6–8 hours effectively). CUF of 25% means ~6 equivalent full-load hours per day — perfectly normal!<br><br>
+    📅 <b>Weekend vs weekday:</b> CUF should be uniform — any dips on specific days indicate scheduled maintenance or grid issues.<br><br>
+    ⚡ <b>Improving CUF:</b> Adding battery storage extends effective generation hours beyond daylight.
+    <div class="pop-formula">CUF_daily = kWh_generated ÷ (kW_installed × 24 hrs)</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div><div class="pt">🔋 Capacity Utilization (CUF) 🏭</div><div class="pm" id="cuf-meta">% · 1,600.5 kW installed</div></div></div>
+    <div class="leg"><span class="li"><span class="lsq" style="background:#a78bfa"></span>Daily CUF %</span></div>
+    <div class="cw h160"><canvas id="cufChart" role="img" aria-label="Daily capacity utilization factor for March 2026"></canvas></div>
+  </div>
+</div>
+
+<!-- Irradiation Chart -->
+<div class="card-wrap" id="pg-irr">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop12">📖</button>
+<div class="info-pop" id="pop12">
+  <div class="pop-head"><span class="pop-icon">🌤️</span><span class="pop-title">Irradiation — The Secret of Our Energy ☀</span><button class="pop-close" onclick="closePop('pop12')">✕</button></div>
+  <div class="pop-body">
+    🌞 <b>Irradiance is everything:</b> The sun's irradiance (W/m²) hitting your panels is the single most powerful factor in energy output. No irradiance = no electricity — it's the fundamental input of all solar energy.<br><br>
+    📡 <b>POA measurement:</b> Plane-of-Array pyranometers tilt at the same angle as panels, capturing the exact solar resource your system receives — far more accurate than horizontal sensors.<br><br>
+    🔗 <b>Correlation insight:</b> When energy (pink line) closely follows irradiance bars, the system is performing optimally. Gaps indicate soiling, shading, or inverter losses eating into potential.<br><br>
+    ⚡ <b>Irradiance × Efficiency × Area = Power</b> — This chart makes that equation visible!
+    <div class="pop-formula">G_poa (W/m²) measured → H_poa = ∫G dt (kWh/m²)</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div><div class="pt">🌤 Irradiation vs Energy ☀</div><div class="pm">POA W/m² (bars) · Energy output (line)</div></div></div>
+    <div class="leg"><span class="li"><span class="lsq" style="background:#fbbf24"></span>POA W/m²</span><span class="li"><span class="lln" style="background:#f472b6"></span>Energy (scaled)</span></div>
+    <div class="cw h160"><canvas id="irrChart" role="img" aria-label="Irradiation versus energy output correlation for March 2026"></canvas></div>
+  </div>
+</div>
+
+<!-- Curtailment & Downtime -->
+<div class="card-wrap" id="pg-loss">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop13">📖</button>
+<div class="info-pop" id="pop13">
+  <div class="pop-head"><span class="pop-icon">⚠️</span><span class="pop-title">Curtailment & Downtime Analysis</span><button class="pop-close" onclick="closePop('pop13')">✕</button></div>
+  <div class="pop-body">
+    ⚠️ <b>Curtailment (pink bars):</b> Energy deliberately not exported to the grid — measured as the difference between available capacity and actual export during curtailment windows.<br><br>
+    📴 <b>Downtime % (grey line):</b> Percentage of the 86-site fleet that was offline (zero generation during daylight). A site at 0 kWh on a sunny day = counted offline.<br><br>
+    🔍 <b>Distinguish them:</b> Curtailment is grid-driven (not our fault). Downtime is equipment-driven (our O&M responsibility). Both drain revenue!<br><br>
+    📊 <b>This month:</b> Low curtailment (only Mar 1–3) but high downtime needs urgent investigation.
+    <div class="pop-formula">Downtime% = Offline_sites ÷ 86 × 100 per day</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div><div class="pt">⚠ Curtailment & Downtime</div><div class="pm">kWh lost · % sites offline</div></div></div>
+    <div class="leg"><span class="li"><span class="lsq" style="background:#f472b6"></span>Curtailment kWh</span><span class="li"><span class="lln" style="background:rgba(200,200,200,.7)"></span>Downtime %</span></div>
+    <div class="cw h160"><canvas id="lossChart" role="img" aria-label="Curtailment losses and downtime percentage for March 2026"></canvas></div>
+  </div>
+</div>
+
+<!-- Heatmap + PR Dist -->
+<div class="card-wrap" id="pg-hmap">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop14">📖</button>
+<div class="info-pop" id="pop14">
+  <div class="pop-head"><span class="pop-icon">🗓️</span><span class="pop-title">Generation Heatmap & PR Distribution</span><button class="pop-close" onclick="closePop('pop14')">✕</button></div>
+  <div class="pop-body">
+    🗓️ <b>Heatmap:</b> Each cell = one day of March. Darker green = lower generation; bright amber = peak days. Instantly see your best and worst weeks at a glance!<br><br>
+    📊 <b>PR Distribution histogram:</b> Shows how many site-days achieved each PR bracket. A bell curve centered above 75% = healthy fleet. Heavy left tail = many struggling sites.<br><br>
+    🎨 <b>Color scale:</b> Linear gradient from the month's minimum (~37 MWh) to maximum (~173 MWh). Hover cells for exact values.<br><br>
+    💡 <b>Pro tip:</b> Look for diagonal patterns — these reveal weather systems moving through your portfolio.
+    <div class="pop-formula">Heatmap color = (day_MWh − min) ÷ (max − min) × 100%</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div class="pt">🗓 Heatmap & PR Distribution</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1">
+      <div>
+        <div style="font-size:9px;color:var(--t3);margin-bottom:4px;font-family:'JetBrains Mono',monospace">Daily output intensity · March 2026</div>
+        <div class="hmhdr"><div class="hmd">Su</div><div class="hmd">Mo</div><div class="hmd">Tu</div><div class="hmd">We</div><div class="hmd">Th</div><div class="hmd">Fr</div><div class="hmd">Sa</div></div>
+        <div class="hmgrid" id="hmgrid"></div>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:6px">
+          <span style="font-size:9px;color:var(--t3)">Low</span>
+          <div style="display:flex;gap:2px">
+            <div style="width:9px;height:9px;border-radius:2px;background:#0c1e10"></div>
+            <div style="width:9px;height:9px;border-radius:2px;background:#193d20"></div>
+            <div style="width:9px;height:9px;border-radius:2px;background:#2a6335"></div>
+            <div style="width:9px;height:9px;border-radius:2px;background:#3d8f4e"></div>
+            <div style="width:9px;height:9px;border-radius:2px;background:#f59e0b"></div>
+          </div>
+          <span style="font-size:9px;color:var(--t3)">High</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--t3);margin-bottom:4px;font-family:'JetBrains Mono',monospace">PR distribution · site-days</div>
+        <div class="cw h120"><canvas id="prdistChart" role="img" aria-label="Performance ratio distribution across site-days in March 2026"></canvas></div>
+        <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px" id="prdistRows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- main-grid -->
+
+<!-- ══ BOTTOM ROW ══ -->
+<div class="section-label">🌱 Supporting Analytics · Weekly · Sparklines · Summary</div>
+<div class="bot-row">
+
+<!-- Weekly Summary -->
+<div class="card-wrap">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop15">📖</button>
+<div class="info-pop" id="pop15">
+  <div class="pop-head"><span class="pop-icon">📅</span><span class="pop-title">Weekly Generation Summary</span><button class="pop-close" onclick="closePop('pop15')">✕</button></div>
+  <div class="pop-body">
+    📅 <b>Weekly view:</b> Aggregates daily generation into Mon–Sun calendar weeks, giving you a cleaner pattern that removes day-to-day weather noise.<br><br>
+    📊 <b>Why weekly?</b> Smooths out single rainy/cloudy days to reveal underlying fleet performance trends. Great for reporting to stakeholders!<br><br>
+    🔢 <b>Partial weeks:</b> March 1–2 (Sat–Sun) form a short first week; March 31 (Mon) is a single-day week — totals will be lower for these.<br><br>
+    📈 <b>Target line:</b> 7 × daily target = 735+ MWh/week is the SLA-linked goal.
+    <div class="pop-formula">Week_Total = Σ daily_MWh (Mon to Sun)</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div class="pt">📅 Weekly Summary 📊</div><div class="pm">MWh by week · March 2026</div></div>
+    <div class="cw h140"><canvas id="weeklyChart" role="img" aria-label="Weekly energy generation totals for March 2026"></canvas></div>
+  </div>
+</div>
+
+<!-- Sparklines -->
+<div class="card-wrap">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop16">📖</button>
+<div class="info-pop" id="pop16">
+  <div class="pop-head"><span class="pop-icon">〜</span><span class="pop-title">Metric Sparklines — 31-Day at a Glance</span><button class="pop-close" onclick="closePop('pop16')">✕</button></div>
+  <div class="pop-body">
+    〜 <b>What are sparklines?</b> Miniature inline charts that show an entire month's trend in a tiny space — perfect for at-a-glance health checks without switching views.<br><br>
+    📈 <b>High peaks:</b> Sunny, high-generation days. The taller the spike, the better the day.<br><br>
+    📉 <b>Low troughs:</b> Cloudy weather, curtailment events, or equipment downtime. Flat sections = zero generation (outage).<br><br>
+    🔢 <b>Value shown:</b> The number on the right = the full-month total or average for that metric — quick reference without mental math!<br><br>
+    🌡️ PR sparklines reveal temperature effects — notice how clear-sky days also have highest PR.
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div class="pt">〜 Metric Sparklines 📡</div><div class="pm">31-day at-a-glance</div></div>
+    <div class="spkrow" id="sparkSection"></div>
+  </div>
+</div>
+
+<!-- KPI Summary -->
+<div class="card-wrap">
+    <button class="info-btn" onclick="togglePop(this)" title="Learn more" data-popid="pop17">📖</button>
+<div class="info-pop" id="pop17">
+  <div class="pop-head"><span class="pop-icon">📋</span><span class="pop-title">KPI Summary — Fleet Scorecard</span><button class="pop-close" onclick="closePop('pop17')">✕</button></div>
+  <div class="pop-body">
+    📋 <b>Fleet scorecard:</b> Six key numbers that tell the whole story of your portfolio's March 2026 performance in one compact view.<br><br>
+    🌱 <b>CO₂ Avoided:</b> Calculated using the EPA 2024 US average grid emission factor of 0.705 kg CO₂ per kWh. Every MWh of solar replaces grid power that would have burned fossil fuels.<br><br>
+    🏆 <b>Best PR Day:</b> Mar 24 achieved 85.1% — this is your system's "clean sky benchmark." Any day this far below it represents recoverable losses.<br><br>
+    🔋 <b>Avg Daily:</b> 105.0 MWh ÷ 1,600 kW = 65.6 peak sun hours equivalent per day. Excellent for March!
+    <div class="pop-formula">CO₂ Avoided = 3,254.9 MWh × 0.705 kg/kWh = 2,295 tonnes</div>
+  </div>
+</div>
+      <div class="card-inner">
+    <div class="ph"><div class="pt">📋 KPI Summary 🏆</div></div>
+    <div class="mcards">
+      <div class="mcard"><div class="mclbl">Installed Capacity</div><div class="mcval" style="color:#f59e0b" id="mc-cap">1,600 kW</div><div class="mcsub">Fleet total</div></div>
+      <div class="mcard"><div class="mclbl">Best PR Day</div><div class="mcval" style="color:#60a5fa" id="mc-bestpr">85.1%</div><div class="mcsub" id="mc-bestpr-day">Mar 24</div></div>
+      <div class="mcard"><div class="mclbl">Peak Output</div><div class="mcval" style="color:#fbbf24" id="mc-peak">172.9 MWh</div><div class="mcsub" id="mc-peak-day">Mar 24</div></div>
+      <div class="mcard"><div class="mclbl">Avg Daily</div><div class="mcval" style="color:#a78bfa" id="mc-avgday">105.0 MWh</div><div class="mcsub">31-day average</div></div>
+      <div class="mcard"><div class="mclbl">Active Sites</div><div class="mcval" style="color:#34d399" id="mc-sites">86</div><div class="mcsub">Full portfolio</div></div>
+      <div class="mcard"><div class="mclbl">CO₂ Avoided</div><div class="mcval" style="color:#a3e635">2,295 t</div><div class="mcsub">EPA grid factor</div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- bot-row -->
+
+<!-- ══════════════════════════════════════════════════
+     SITE-LEVEL DASHBOARD
+══════════════════════════════════════════════════ -->
+<div id="view-sitedash" style="display:none;padding:0 22px 28px">
+  <div class="section-label">🏭 Site Wise Dashboard · Individual Site Performance & Device Breakdown</div>
+
+  <!-- Site Selector + KPIs -->
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="clbl">Select Site</span>
+      <select class="cfield" id="siteSelector" onchange="loadSiteDash(this.value)" style="width:220px;font-size:12px;padding:7px 10px">
+        <option value="">— Choose a site —</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="siteKpiRow"></div>
+  </div>
+
+  <!-- Site Charts Grid -->
+  <div id="siteDashContent" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px">
+      <!-- Daily Energy Chart -->
+      <div class="card-wrap" style="grid-column:span 2">
+        <div class="card-inner">
+          <div class="ph"><div><div class="pt">⚡ Daily Energy Generation</div><div class="pm" id="siteEnergyMeta">kWh/day · March 2026</div></div>
+            <div class="pact">
+              <button class="bxs on" onclick="setSiteChartType('bar',this)">Bar</button>
+              <button class="bxs" onclick="setSiteChartType('line',this)">Line</button>
+            </div>
+          </div>
+          <div class="leg"><span class="li"><span class="lsq" style="background:#f59e0b"></span>Generation kWh</span><span class="li"><span class="lln" style="background:#60a5fa"></span>PR %</span></div>
+          <div class="cw h220"><canvas id="siteGenChart"></canvas></div>
+        </div>
+      </div>
+      <!-- Site Stats -->
+      <div class="card-wrap">
+        <div class="card-inner">
+          <div class="pt" style="margin-bottom:10px">📊 Site Statistics</div>
+          <div style="display:flex;flex-direction:column;gap:8px" id="siteStatsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Device Performance Table -->
+    <div class="card-wrap" style="margin-bottom:20px">
+      <div class="card-inner">
+        <div class="ph" style="margin-bottom:10px">
+          <div><div class="pt">🔌 Individual Device Performance</div><div class="pm">Inverter & meter-level breakdown · March 2026</div></div>
+          <div class="pact">
+            <button class="bxs on" onclick="filterDevices('all',this)">All</button>
+            <button class="bxs" onclick="filterDevices('inverter',this)">Inverters</button>
+            <button class="bxs" onclick="filterDevices('meter',this)">Meters</button>
+            <button class="bxs" onclick="filterDevices('alert',this)">🚨 Alerts</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:700px" id="deviceTable">
+            <thead>
+              <tr>
+                <th style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px;text-align:left;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace;white-space:nowrap">Device</th>
+                <th style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px;text-align:left;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace">Type</th>
+                <th style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px;text-align:right;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace">Capacity</th>
+                <th style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px;text-align:right;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace">Monthly kWh</th>
+                <th style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px;text-align:right;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace">PR %</th>
+                <th style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px;text-align:right;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace">Avail %</th>
+                <th style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px;text-align:center;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace">Status</th>
+                <th style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 10px;text-align:right;border-bottom:1px solid rgba(245,158,11,0.12);font-family:'JetBrains Mono',monospace">Trend</th>
+              </tr>
+            </thead>
+            <tbody id="deviceTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Device Performance Charts Row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card-wrap">
+        <div class="card-inner">
+          <div class="ph"><div class="pt">🔆 Inverter Output Comparison</div><div class="pm">Monthly kWh by device</div></div>
+          <div class="cw h180"><canvas id="deviceBarChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card-wrap">
+        <div class="card-inner">
+          <div class="ph"><div class="pt">📉 Device PR Distribution</div><div class="pm">Performance ratio per device</div></div>
+          <div class="cw h180"><canvas id="devicePRChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="siteDashEmpty" style="text-align:center;padding:60px 20px;color:var(--t3)">
+    <div style="font-size:48px;margin-bottom:12px">🏭</div>
+    <div style="font-size:16px;font-weight:700;color:var(--t2);margin-bottom:6px">Select a site to view detailed analytics</div>
+    <div style="font-size:12px">Choose from the dropdown above to explore site-level energy, PR, and individual device performance</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MAP VIEW
+══════════════════════════════════════════════════ -->
+<div id="view-mapview" style="display:none;padding:0 22px 28px">
+  <div class="section-label">🗺 Portfolio Map View · All 86 Site Locations · Interactive</div>
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+    <!-- Map -->
+    <div class="card-wrap">
+      <div class="card-inner" style="padding:16px">
+        <div class="ph" style="margin-bottom:10px">
+          <div><div class="pt">🌍 Site Location Map</div><div class="pm">Tri-Force Energy Portfolio · 86 Sites · Click markers for details</div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace">Filter:</span>
+            <button class="bxs on" onclick="filterMap('all',this)">All Sites</button>
+            <button class="bxs" onclick="filterMap('top',this)">Top PR</button>
+            <button class="bxs" onclick="filterMap('alert',this)">🚨 Low PR</button>
+          </div>
+        </div>
+        <div id="siteMap" style="width:100%;height:480px;border-radius:12px;background:var(--card2);border:1px solid var(--bdr);overflow:hidden;position:relative">
+          <canvas id="mapCanvas" style="width:100%;height:100%;display:block"></canvas>
+          <div id="mapTooltip" style="display:none;position:absolute;background:rgba(6,11,22,0.97);border:1px solid var(--acc);border-radius:10px;padding:10px 14px;font-size:11px;color:var(--t1);pointer-events:none;min-width:180px;z-index:100;box-shadow:0 4px 20px rgba(245,158,11,0.3)"></div>
+        </div>
+        <!-- Map legend -->
+        <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)"><span style="width:12px;height:12px;border-radius:50%;background:#34d399;display:inline-block;box-shadow:0 0 6px #34d399"></span>High PR (≥80%)</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)"><span style="width:12px;height:12px;border-radius:50%;background:#fbbf24;display:inline-block;box-shadow:0 0 6px #fbbf24"></span>Mid PR (65–80%)</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)"><span style="width:12px;height:12px;border-radius:50%;background:#f472b6;display:inline-block;box-shadow:0 0 6px #f472b6"></span>Low PR (&lt;65%)</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)"><span style="width:12px;height:12px;border-radius:50%;background:#60a5fa;display:inline-block"></span>Large Site (&gt;100 kWp)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Site List Panel -->
+    <div class="card-wrap" style="max-height:580px;overflow:hidden;display:flex;flex-direction:column">
+      <div class="card-inner" style="flex:1;overflow:hidden;padding:16px">
+        <div class="pt" style="margin-bottom:10px">📋 Site Directory</div>
+        <input type="text" class="cfield" id="siteSearch" placeholder="Search sites..." style="width:100%;margin-bottom:10px" oninput="filterSiteList(this.value)">
+        <div style="overflow-y:auto;max-height:460px" id="siteListPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Stats Row -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px">
+    <div class="card-wrap"><div class="card-inner" style="padding:16px">
+      <div class="kpi-label">States Covered</div>
+      <div class="kpi-value" style="color:#60a5fa;font-size:28px">3</div>
+      <div class="kpi-sub">NJ, NY, PA</div>
+    </div></div>
+    <div class="card-wrap"><div class="card-inner" style="padding:16px">
+      <div class="kpi-label">Avg Site Capacity</div>
+      <div class="kpi-value" style="color:#f59e0b;font-size:28px">18.6</div>
+      <div class="kpi-sub">kWp per site</div>
+    </div></div>
+    <div class="card-wrap"><div class="card-inner" style="padding:16px">
+      <div class="kpi-label">Highest Output Site</div>
+      <div class="kpi-value" style="color:#34d399;font-size:16px;line-height:1.3">Saunders</div>
+      <div class="kpi-sub">545.3 MWh this month</div>
+    </div></div>
+    <div class="card-wrap"><div class="card-inner" style="padding:16px">
+      <div class="kpi-label">Geo Coverage</div>
+      <div class="kpi-value" style="color:#a78bfa;font-size:28px">~120mi</div>
+      <div class="kpi-sub">Portfolio span</div>
+    </div></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="foot">
+  <span>🌿 <b style="color:#34d399">AGS — American Green Solutions</b> &nbsp;·&nbsp; ☀ <em style="color:rgba(245,158,11,0.8)">Irradiance is the secret of our energy</em> &nbsp;·&nbsp; Sunfinity Solar Intelligence Platform · 🏭 Tri-Force Energy Portfolio · March 1–31 2026 · 86 Sites</span>
+  <div class="ftags"><span class="ftag">v4.2</span><span class="ftag">AGS Platform</span><span class="ftag">Click 📖 for Descriptions</span><span class="ftag">Interactive</span></div>
+</div>
+
+</div><!-- #app -->
+
+<!-- SCENE CANVAS SCRIPT -->
+<script>
+const SC=document.getElementById('scene-canvas');const sx=SC.getContext('2d');
+let SW,SH;
+function rsz(){SW=SC.width=window.innerWidth;SH=SC.height=window.innerHeight;}
+rsz();window.addEventListener('resize',rsz);
+const clouds=[{x:.08,y:.07,s:1.1,sp:.00011,a:.5},{x:.32,y:.045,s:.8,sp:.00008,a:.4},{x:.58,y:.09,s:1.4,sp:.00014,a:.48},{x:.78,y:.055,s:.9,sp:.0001,a:.42}];
+const birds=Array.from({length:7},(_,i)=>({x:Math.random(),y:.05+Math.random()*.1,sp:.00018+Math.random()*.0003,ft:Math.random()*Math.PI*2,sz:.5+Math.random()*.5}));
+const trees=[{x:.02,t:'p',h:.22,s:1},{x:.06,t:'r',h:.16,s:.8},{x:.10,t:'p',h:.19,s:.9},{x:.14,t:'r',h:.13,s:.7},{x:.83,t:'p',h:.20,s:1},{x:.87,t:'r',h:.17,s:.85},{x:.91,t:'p',h:.22,s:1.1},{x:.95,t:'r',h:.14,s:.75},{x:.98,t:'p',h:.18,s:.9}];
+function dCloud(t2,cx_,cy_,s,a){
+  sx.save();sx.globalAlpha=a;sx.fillStyle='rgba(200,220,255,1)';
+  [{ox:0,oy:0,r:22},{ox:28,oy:-8,r:28},{ox:60,oy:-4,r:22},{ox:88,oy:0,r:18},{ox:-18,oy:4,r:16}].forEach(p=>{
+    sx.beginPath();sx.arc(cx_+p.ox*s,cy_+p.oy*s,p.r*s,0,Math.PI*2);sx.fill();
+  });
+  sx.restore();
+}
+function dBird(t2,b){
+  const bx=SW*((b.x+t2*b.sp)%1.1-.05),by=SH*b.y;
+  const fl=Math.sin(t2*.008+b.ft)*.4,s=b.sz*10;
+  sx.save();sx.strokeStyle='rgba(200,220,255,.65)';sx.lineWidth=1.5;sx.lineCap='round';
+  sx.beginPath();sx.moveTo(bx,by);sx.bezierCurveTo(bx-s,by-s*fl,bx-s*1.8,by,bx-s*2.5,by+s*.3);
+  sx.moveTo(bx,by);sx.bezierCurveTo(bx+s,by-s*fl,bx+s*1.8,by,bx+s*2.5,by+s*.3);
+  sx.stroke();sx.restore();
+}
+function dPine(tx,ty,h,s){
+  sx.fillStyle='#3d2210';sx.fillRect(tx-h*.06*s,ty,h*.12*s,h*.22*s);
+  for(let i=0;i<4;i++){const ly=ty-(i*h*s*.28)+h*s*.15,lw=h*.55*s*(1-i*.18);sx.fillStyle=`hsl(${132+i*4},${58-i*4}%,${20+i*4}%)`;sx.beginPath();sx.moveTo(tx,ly-h*s*.32);sx.lineTo(tx+lw/2,ly);sx.lineTo(tx-lw/2,ly);sx.closePath();sx.fill();}
+}
+function dRound(tx,ty,h,s){
+  const r=h*s*.42;sx.fillStyle='#321e0f';sx.fillRect(tx-h*s*.07,ty,h*s*.14,h*s*.28);
+  const g=sx.createRadialGradient(tx-r*.2,ty-r*.2-r,r*.3,tx,ty-r,r);g.addColorStop(0,'#48a858');g.addColorStop(.6,'#2c7838');g.addColorStop(1,'#183e20');
+  sx.fillStyle=g;sx.beginPath();sx.arc(tx,ty-r,r,0,Math.PI*2);sx.fill();
+}
+function dPanels(){
+  const bx=SW*.22,by=SH*.76,pw=SW*.065,ph=pw*.52,gx=pw*1.12,gy=ph*2.1;
+  for(let row=0;row<3;row++) for(let col=0;col<6;col++){
+    const px=bx+col*gx,py=by+row*gy;
+    sx.fillStyle='rgba(0,0,0,.4)';sx.beginPath();sx.ellipse(px+pw/2,py+ph+5,pw*.45,3.5,0,0,Math.PI*2);sx.fill();
+    const pg=sx.createLinearGradient(px,py,px+pw,py+ph);pg.addColorStop(0,'rgba(28,70,155,.92)');pg.addColorStop(.5,'rgba(18,55,135,.96)');pg.addColorStop(1,'rgba(10,38,98,.92)');
+    sx.fillStyle=pg;sx.fillRect(px,py,pw,ph);
+    sx.strokeStyle='rgba(90,140,240,.22)';sx.lineWidth=.5;
+    for(let gxi=1;gxi<4;gxi++){sx.beginPath();sx.moveTo(px+gxi*(pw/4),py+2);sx.lineTo(px+gxi*(pw/4),py+ph-2);sx.stroke();}
+    for(let gyi=1;gyi<3;gyi++){sx.beginPath();sx.moveTo(px+2,py+gyi*(ph/3));sx.lineTo(px+pw-2,py+gyi*(ph/3));sx.stroke();}
+    sx.fillStyle='rgba(255,255,255,.11)';sx.beginPath();sx.ellipse(px+pw*.25,py+ph*.3,pw*.11,ph*.09,-.5,0,Math.PI*2);sx.fill();
+    sx.strokeStyle='rgba(55,95,175,.45)';sx.lineWidth=1.5;sx.strokeRect(px,py,pw,ph);
+    sx.fillStyle='#223448';sx.fillRect(px+pw/2-2,py+ph,4,gy-ph-2);
+  }
+}
+function sFrame(t){
+  sx.clearRect(0,0,SW,SH);
+  const sk=sx.createLinearGradient(0,0,0,SH*.72);sk.addColorStop(0,'#05090f');sk.addColorStop(.35,'#08132a');sk.addColorStop(.65,'#0d2040');sk.addColorStop(1,'#101828');
+  sx.fillStyle=sk;sx.fillRect(0,0,SW,SH);
+  // stars
+  sx.save();for(let i=0;i<55;i++){const stx=((i*139.5)%1)*SW,sty=((i*71.3)%.48)*SH,sa=.25+.45*Math.abs(Math.sin(t*.001+i));sx.globalAlpha=sa*.55;sx.fillStyle='#dce8ff';sx.beginPath();sx.arc(stx,sty,.7+Math.random()*.4,0,Math.PI*2);sx.fill();}sx.restore();
+  // sun
+  const sunx=SW*.5,suny=SH*.17,sr=Math.min(SW,SH)*.058;
+  for(let i=3;i>=0;i--){const rg=sx.createRadialGradient(sunx,suny,sr*.4,sunx,suny,sr*(1.5+i*.9));rg.addColorStop(0,`rgba(255,210,0,${.07-i*.015})`);rg.addColorStop(1,'rgba(255,210,0,0)');sx.fillStyle=rg;sx.beginPath();sx.arc(sunx,suny,sr*(1.5+i*.9),0,Math.PI*2);sx.fill();}
+  const sg=sx.createRadialGradient(sunx-sr*.2,suny-sr*.2,sr*.1,sunx,suny,sr);sg.addColorStop(0,'#fff9e0');sg.addColorStop(.4,'#FFD700');sg.addColorStop(1,'#FF8C00');
+  sx.fillStyle=sg;sx.beginPath();sx.arc(sunx,suny,sr,0,Math.PI*2);sx.fill();
+  for(let i=0;i<12;i++){const a=(i/12)*Math.PI*2+t*.002,r1=sr*1.22,r2=sr*(1.65+.18*Math.sin(t*.005+i));sx.beginPath();sx.moveTo(sunx+Math.cos(a)*r1,suny+Math.sin(a)*r1);sx.lineTo(sunx+Math.cos(a)*r2,suny+Math.sin(a)*r2);sx.strokeStyle=`rgba(255,215,0,${.32+.18*Math.sin(t*.004+i*.5)})`;sx.lineWidth=2+Math.sin(t*.003+i)*.8;sx.lineCap='round';sx.stroke();}
+  // clouds
+  clouds.forEach(c=>{const cx_=SW*((c.x+t*c.sp)%1.12-.05),cy_=SH*(c.y+Math.sin(t*.0005+c.x*10)*.01);dCloud(t,cx_,cy_,c.s,c.a);});
+  // birds
+  birds.forEach(b=>dBird(t,b));
+  // ground
+  const gy=SH*.71;const gr=sx.createLinearGradient(0,gy,0,SH);gr.addColorStop(0,'#0d2018');gr.addColorStop(.3,'#112a1e');gr.addColorStop(1,'#0a1614');sx.fillStyle=gr;sx.beginPath();sx.moveTo(0,gy);sx.bezierCurveTo(SW*.15,gy-SH*.04,SW*.3,gy+SH*.02,SW*.5,gy-SH*.03);sx.bezierCurveTo(SW*.7,gy-SH*.08,SW*.85,gy+SH*.01,SW,gy+SH*.01);sx.lineTo(SW,SH);sx.lineTo(0,SH);sx.closePath();sx.fill();
+  // trees
+  trees.forEach(tr=>{const ty=SH*(.67+Math.sin(tr.x*31)*.04);tr.t==='p'?dPine(SW*tr.x,ty,SH*tr.h*tr.s,1):dRound(SW*tr.x,ty,SH*tr.h*tr.s,1);});
+  dPanels();
+  // dim overlay
+  const ov=sx.createLinearGradient(0,0,0,SH);ov.addColorStop(0,'rgba(4,8,18,.38)');ov.addColorStop(.45,'rgba(4,8,18,.6)');ov.addColorStop(1,'rgba(4,8,18,.8)');sx.fillStyle=ov;sx.fillRect(0,0,SW,SH);
+  requestAnimationFrame(sFrame);
+}
+requestAnimationFrame(sFrame);
+</script>
+
+<!-- DATA + CHARTS -->
+<script>
+const DAILY=[
+  {Day:1,Label:'Mar 01',E:109090,PR:72.1,CUF:22.7,POA:142,Irr:3.41,DT:26.3,Curt:870},
+  {Day:2,Label:'Mar 02',E:130670,PR:76.4,CUF:27.2,POA:168,Irr:4.03,DT:25.2,Curt:640},
+  {Day:3,Label:'Mar 03',E:40470,PR:61.2,CUF:8.4,POA:52,Irr:1.25,DT:28.3,Curt:137},
+  {Day:4,Label:'Mar 04',E:91590,PR:74.8,CUF:19.1,POA:120,Irr:2.88,DT:27.2,Curt:0},
+  {Day:5,Label:'Mar 05',E:37610,PR:63.0,CUF:7.8,POA:48,Irr:1.15,DT:29.1,Curt:0},
+  {Day:6,Label:'Mar 06',E:46790,PR:65.5,CUF:9.7,POA:61,Irr:1.46,DT:30.2,Curt:0},
+  {Day:7,Label:'Mar 07',E:57600,PR:68.3,CUF:12.0,POA:78,Irr:1.87,DT:28.1,Curt:0},
+  {Day:8,Label:'Mar 08',E:93890,PR:75.2,CUF:19.5,POA:122,Irr:2.93,DT:27.0,Curt:0},
+  {Day:9,Label:'Mar 09',E:155430,PR:81.9,CUF:32.4,POA:197,Irr:4.73,DT:24.3,Curt:0},
+  {Day:10,Label:'Mar 10',E:128050,PR:79.1,CUF:26.7,POA:162,Irr:3.89,DT:25.2,Curt:0},
+  {Day:11,Label:'Mar 11',E:91500,PR:74.6,CUF:19.0,POA:118,Irr:2.83,DT:27.1,Curt:0},
+  {Day:12,Label:'Mar 12',E:44770,PR:63.8,CUF:9.3,POA:57,Irr:1.37,DT:30.1,Curt:0},
+  {Day:13,Label:'Mar 13',E:100560,PR:76.9,CUF:20.9,POA:130,Irr:3.12,DT:26.2,Curt:0},
+  {Day:14,Label:'Mar 14',E:132430,PR:80.2,CUF:27.6,POA:168,Irr:4.03,DT:24.3,Curt:0},
+  {Day:15,Label:'Mar 15',E:77390,PR:71.8,CUF:16.1,POA:99,Irr:2.38,DT:27.2,Curt:0},
+  {Day:16,Label:'Mar 16',E:46750,PR:64.2,CUF:9.7,POA:60,Irr:1.44,DT:29.1,Curt:0},
+  {Day:17,Label:'Mar 17',E:146010,PR:82.3,CUF:30.4,POA:185,Irr:4.44,DT:23.2,Curt:0},
+  {Day:18,Label:'Mar 18',E:136410,PR:80.8,CUF:28.4,POA:172,Irr:4.13,DT:24.3,Curt:0},
+  {Day:19,Label:'Mar 19',E:94440,PR:75.4,CUF:19.7,POA:122,Irr:2.93,DT:26.2,Curt:0},
+  {Day:20,Label:'Mar 20',E:111890,PR:77.6,CUF:23.3,POA:143,Irr:3.43,DT:25.2,Curt:0},
+  {Day:21,Label:'Mar 21',E:122940,PR:79.0,CUF:25.6,POA:156,Irr:3.74,DT:24.3,Curt:0},
+  {Day:22,Label:'Mar 22',E:81410,PR:72.3,CUF:17.0,POA:104,Irr:2.50,DT:27.1,Curt:0},
+  {Day:23,Label:'Mar 23',E:47500,PR:64.5,CUF:9.9,POA:62,Irr:1.49,DT:29.0,Curt:0},
+  {Day:24,Label:'Mar 24',E:172920,PR:85.1,CUF:36.0,POA:216,Irr:5.18,DT:21.0,Curt:0},
+  {Day:25,Label:'Mar 25',E:147890,PR:82.6,CUF:30.8,POA:187,Irr:4.49,DT:22.1,Curt:0},
+  {Day:26,Label:'Mar 26',E:121960,PR:78.8,CUF:25.4,POA:154,Irr:3.70,DT:24.3,Curt:0},
+  {Day:27,Label:'Mar 27',E:111190,PR:77.3,CUF:23.2,POA:141,Irr:3.38,DT:25.2,Curt:0},
+  {Day:28,Label:'Mar 28',E:167560,PR:84.2,CUF:34.9,POA:210,Irr:5.04,DT:21.3,Curt:0},
+  {Day:29,Label:'Mar 29',E:169500,PR:84.8,CUF:35.3,POA:213,Irr:5.11,DT:21.0,Curt:0},
+  {Day:30,Label:'Mar 30',E:139750,PR:81.3,CUF:29.1,POA:177,Irr:4.25,DT:23.2,Curt:0},
+  {Day:31,Label:'Mar 31',E:98960,PR:76.1,CUF:20.6,POA:126,Irr:3.02,DT:26.2,Curt:0}
+];
+const WEEKLY=[
+  {Label:'Wk 1',E:529060,PR:71.9,CUF:17.0,POA:95,DT:27.9,Curt:1647},
+  {Label:'Wk 2',E:690700,PR:76.3,CUF:21.5,POA:136,DT:26.0,Curt:0},
+  {Label:'Wk 3',E:753000,PR:78.1,CUF:23.5,POA:152,DT:25.4,Curt:0},
+  {Label:'Wk 4',E:970520,PR:82.4,CUF:30.3,POA:185,DT:22.4,Curt:0},
+  {Label:'Wk 5',E:311620,PR:80.7,CUF:25.2,POA:152,DT:24.7,Curt:0}
+];
+const MONTHLY=[{Label:'March 2026',E:3254900,PR:77.6,CUF:24.4,POA:138,DT:25.5,Curt:1647}];
+const TOP=[
+  {n:'Saunders Settlement',kWh:545340,pr:null},{n:'MSK - Monmouth',kWh:217450,pr:null},
+  {n:'Westside Harvesting #2',kWh:172560,pr:null},{n:'AHS Chilton Medical Ctr',kWh:130810,pr:null},
+  {n:'Gardner',kWh:96500,pr:89.9},{n:'AHS Morristown - Women',kWh:95970,pr:null},
+  {n:'Boscovs Moorestown',kWh:93090,pr:null},{n:'AHS Morristown Rockaway',kWh:68760,pr:null},
+];
+const BOT=[
+  {n:'FAC - Warren',kWh:1380},{n:'St. Polycarp 2 Array',kWh:2030},
+  {n:'PNCT - Outbound Gate',kWh:2610},{n:'Old Colony 2 C',kWh:2680},{n:'PREIT Moorestown Mall',kWh:2890}
+];
+const PRD={labels:['0–40%','40–60%','60–75%','75–90%','90%+'],values:[38,55,120,180,96]};
+
+let S={gran:'daily',metric:'energy',ct:'bar',prTarget:75,cap:1600.5,showTargets:true};
+function getDS(){return S.gran==='daily'?DAILY:S.gran==='weekly'?WEEKLY:MONTHLY;}
+function getF(r){return S.metric==='energy'?r.E:S.metric==='pr'?r.PR:S.metric==='cuf'?r.CUF:r.POA;}
+
+const TC='rgba(100,125,160,.8)',GC='rgba(245,158,11,.05)';
+const TTO={backgroundColor:'#0d1c2e',titleColor:'#f1f5f9',bodyColor:'rgba(148,163,184,.9)',borderColor:'rgba(245,158,11,.22)',borderWidth:1,padding:10,mode:'index',intersect:false,cornerRadius:6};
+const BO={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TTO},scales:{x:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"}},grid:{color:GC}},y:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"}},grid:{color:GC}}}};
+let CH={};
+function mk(id,cfg){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),cfg);}
+function mv(a,w=4){return a.map((_,i)=>{const s=a.slice(Math.max(0,i-w+1),i+1);return+(s.reduce((x,y)=>x+y,0)/s.length).toFixed(1);});}
+
+function bGen(){
+  const ds=getDS(),lb=ds.map(r=>r.Label),vl=ds.map(r=>getF(r)),av=mv(vl),po=ds.map(r=>r.POA),mx=Math.max(...vl);
+  const ac='#f59e0b';
+  let d0;
+  if(S.ct==='bar') d0={label:'Energy',data:vl,backgroundColor:vl.map(v=>ac+(Math.round((.3+v/mx*.58)*255)).toString(16).padStart(2,'0')),borderColor:'transparent',borderWidth:0,borderRadius:5,borderSkipped:false,yAxisID:'y'};
+  else if(S.ct==='line') d0={label:'Energy',data:vl,borderColor:ac,borderWidth:2.5,pointRadius:2.5,pointBackgroundColor:ac,tension:.4,fill:false,yAxisID:'y'};
+  else d0={label:'Energy',data:vl,borderColor:ac,borderWidth:2,pointRadius:0,tension:.4,fill:true,backgroundColor:ac+'20',yAxisID:'y'};
+  mk('genChart',{type:S.ct==='bar'?'bar':'line',data:{labels:lb,datasets:[d0,
+    {label:'7-day Avg',data:av,type:'line',borderColor:'#fbbf24',borderWidth:2,pointRadius:0,tension:.4,fill:false,yAxisID:'y'},
+    {label:'POA',data:po,type:'line',borderColor:'rgba(52,211,153,.55)',borderWidth:1.5,borderDash:[4,3],pointRadius:0,tension:.4,fill:false,yAxisID:'y1'},
+  ]},options:{...BO,scales:{
+    x:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},maxTicksLimit:16},grid:{color:GC}},
+    y:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:GC}},
+    y1:{type:'linear',position:'right',ticks:{color:'rgba(52,211,153,.4)',font:{size:9},callback:v=>v+'W'},grid:{drawOnChartArea:false}},
+  }}});
+}
+function bPR(){
+  const ds=getDS(),lb=ds.map(r=>r.Label),vl=ds.map(r=>r.PR),tg=Array(ds.length).fill(S.prTarget);
+  mk('prChart',{type:'line',data:{labels:lb,datasets:[
+    {label:'PR',data:vl,borderColor:'#60a5fa',borderWidth:2.5,pointRadius:2,pointBackgroundColor:'#60a5fa',backgroundColor:'rgba(96,165,250,.1)',fill:true,tension:.4},
+    ...(S.showTargets?[{label:'Target',data:tg,borderColor:'rgba(244,114,182,.7)',borderWidth:1.5,borderDash:[6,4],pointRadius:0}]:[])
+  ]},options:{...BO,scales:{x:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},maxTicksLimit:10},grid:{color:GC}},y:{min:50,max:100,ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},grid:{color:GC}}}}});
+}
+function bCUF(){
+  const ds=getDS(),lb=ds.map(r=>r.Label),vl=ds.map(r=>r.CUF);
+  document.getElementById('cuf-meta').textContent=`% · ${S.cap.toLocaleString()} kW installed`;
+  mk('cufChart',{type:'line',data:{labels:lb,datasets:[
+    {label:'CUF',data:vl,borderColor:'#a78bfa',borderWidth:2.5,pointRadius:2,pointBackgroundColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',fill:true,tension:.4},
+  ]},options:{...BO,scales:{x:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},maxTicksLimit:10},grid:{color:GC}},y:{min:0,ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},grid:{color:GC}}}}});
+}
+function bIrr(){
+  const ds=getDS(),lb=ds.map(r=>r.Label);
+  mk('irrChart',{type:'bar',data:{labels:lb,datasets:[
+    {label:'POA W/m²',data:ds.map(r=>r.POA),backgroundColor:'rgba(251,191,36,.62)',borderRadius:3,yAxisID:'y'},
+    {label:'Energy scaled',data:ds.map(r=>+(r.E/10000).toFixed(1)),type:'line',borderColor:'#f472b6',borderWidth:2,pointRadius:0,tension:.4,fill:false,yAxisID:'y1'},
+  ]},options:{...BO,scales:{x:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},maxTicksLimit:10},grid:{color:GC}},y:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"}},grid:{color:GC}},y1:{type:'linear',position:'right',ticks:{color:'rgba(244,114,182,.5)',font:{size:9}},grid:{drawOnChartArea:false}}}}});
+}
+function bLoss(){
+  const ds=getDS(),lb=ds.map(r=>r.Label);
+  mk('lossChart',{type:'bar',data:{labels:lb,datasets:[
+    {label:'Curtailment kWh',data:ds.map(r=>r.Curt||0),backgroundColor:'rgba(244,114,182,.75)',borderRadius:3,yAxisID:'y'},
+    {label:'Downtime %',data:ds.map(r=>r.DT||0),type:'line',borderColor:'rgba(200,200,200,.7)',borderWidth:2,pointRadius:2,pointBackgroundColor:'rgba(200,200,200,.7)',tension:.4,fill:false,yAxisID:'y1'},
+  ]},options:{...BO,scales:{x:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},maxTicksLimit:10},grid:{color:GC}},y:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"}},grid:{color:GC}},y1:{type:'linear',position:'right',min:0,max:50,ticks:{color:'rgba(180,180,180,.5)',font:{size:9},callback:v=>v+'%'},grid:{drawOnChartArea:false}}}}});
+}
+function bWeekly(){
+  mk('weeklyChart',{type:'bar',data:{labels:WEEKLY.map(r=>r.Label),datasets:[
+    {label:'kWh',data:WEEKLY.map(r=>r.E),backgroundColor:['#f59e0b55','#f59e0b77','#f59e0b99','#f59e0bcc','#fbbf2488'],borderColor:['#f59e0b','#f59e0b','#f59e0b','#f59e0b','#fbbf24'],borderWidth:1.5,borderRadius:7}
+  ]},options:{...BO,scales:{x:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"}},grid:{color:GC}},y:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>(v/1000).toFixed(0)+'k'},grid:{color:GC}}}}});
+}
+function bPRDist(){
+  const clrs=['rgba(244,114,182,.8)','rgba(251,191,36,.8)','rgba(96,165,250,.8)','rgba(245,158,11,.9)','rgba(163,230,53,.9)'];
+  mk('prdistChart',{type:'bar',data:{labels:PRD.labels,datasets:[{label:'Sites',data:PRD.values,backgroundColor:clrs,borderRadius:4,borderSkipped:false}]},
+    options:{...BO,indexAxis:'y',scales:{x:{ticks:{color:TC,font:{size:9,family:"'JetBrains Mono',monospace"}},grid:{color:GC}},y:{ticks:{color:TC,font:{size:9,family:"'JetBrains Mono',monospace"}},grid:{color:GC}}}}});
+  const tot=PRD.values.reduce((a,b)=>a+b,0);
+  document.getElementById('prdistRows').innerHTML=PRD.labels.map((l,i)=>{const p=Math.round(PRD.values[i]/tot*100);return`<div style="display:flex;align-items:center;gap:4px;padding:2px 0"><span style="font-size:8.5px;color:var(--t3);width:38px;font-family:'JetBrains Mono',monospace">${l}</span><div style="flex:1;height:4px;background:rgba(10,21,37,.9);border-radius:2px"><div style="width:${p}%;height:100%;border-radius:2px;background:${clrs[i]}"></div></div><span style="font-size:8.5px;color:var(--t2);width:22px;text-align:right;font-family:'JetBrains Mono',monospace">${PRD.values[i]}</span></div>`;}).join('');
+}
+function bHeatmap(){
+  const el=document.getElementById('hmgrid');el.innerHTML='';
+  const minE=Math.min(...DAILY.map(r=>r.E)),maxE=Math.max(...DAILY.map(r=>r.E));
+  const hc=e=>{const n=(e-minE)/(maxE-minE);return n<.2?'#0c1e10':n<.4?'#193d20':n<.6?'#2a6335':n<.8?'#3d8f4e':'#f59e0b';};
+  DAILY.forEach(r=>{el.innerHTML+=`<div class="hmc" style="background:${hc(r.E)}" title="${r.Label}: ${(r.E/1000).toFixed(1)} MWh">${r.Day}</div>`;});
+}
+function bSparklines(){
+  const items=[
+    {l:'Energy',v:`${(DAILY.reduce((a,r)=>a+r.E,0)/1000).toFixed(0)} MWh`,d:DAILY.map(r=>r.E),c:'#f59e0b'},
+    {l:'PR %',v:`${(DAILY.reduce((a,r)=>a+r.PR,0)/DAILY.length).toFixed(1)}%`,d:DAILY.map(r=>r.PR),c:'#60a5fa'},
+    {l:'CUF %',v:`${(DAILY.reduce((a,r)=>a+r.CUF,0)/DAILY.length).toFixed(1)}%`,d:DAILY.map(r=>r.CUF),c:'#a78bfa'},
+    {l:'POA',v:`${DAILY.reduce((a,r)=>a+r.Irr,0).toFixed(1)} kWh`,d:DAILY.map(r=>r.POA),c:'#fbbf24'},
+    {l:'Downtime',v:`${(DAILY.reduce((a,r)=>a+r.DT,0)/DAILY.length).toFixed(1)}%`,d:DAILY.map(r=>r.DT),c:'#f472b6'},
+  ];
+  const sec=document.getElementById('sparkSection');
+  sec.innerHTML=items.map((s,i)=>`<div class="spkitem"><span class="spklabel">${s.l}</span><div class="spkw"><canvas id="spk${i}" role="img" aria-label="Sparkline for ${s.l}"></canvas></div><span class="spkval" style="color:${s.c}">${s.v}</span></div>`).join('');
+  items.forEach((s,i)=>{const el=document.getElementById('spk'+i);if(!el)return;new Chart(el,{type:'line',data:{labels:DAILY.map(r=>r.Day),datasets:[{data:s.d,borderColor:s.c,borderWidth:1.5,pointRadius:0,tension:.4,fill:true,backgroundColor:s.c+'28'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:false}});});
+}
+function bSiteTables(){
+  document.getElementById('topTbl').innerHTML=TOP.map((s,i)=>{
+    const pc=s.pr?(s.pr>=80?'#34d399':s.pr>=65?'#fbbf24':'#f472b6'):'#f59e0b';
+    const prTxt=s.pr?`${Math.round(s.pr)}%`:'—';
+    const bw=s.pr?Math.round(s.pr):Math.round(s.kWh/545340*80);
+    return`<tr><td class="srank">${i+1}</td><td class="sname" title="${s.n}">${s.n}</td><td class="skwh">${(s.kWh/1000).toFixed(1)}k</td><td class="spr"><div class="prbar"><div class="prbg"><div class="prfill" style="width:${bw}%;background:${pc}"></div></div><span class="prval" style="color:${pc}">${prTxt}</span></div></td></tr>`;
+  }).join('');
+  document.getElementById('botTbl').innerHTML=BOT.map((s,i)=>`<tr><td class="srank" style="color:#f472b6">${i+1}</td><td class="sname" style="color:rgba(244,114,182,.9)">${s.n}</td><td class="skwh" style="color:#f472b6">${s.kWh}</td></tr>`).join('');
+}
+function buildAll(){bGen();bPR();bCUF();bIrr();bLoss();bWeekly();bPRDist();bHeatmap();bSparklines();bSiteTables();}
+
+function updateKPIs(){
+  const ds=getDS(),tot=ds.reduce((a,r)=>a+r.E,0);
+  const avgPR=(ds.reduce((a,r)=>a+r.PR,0)/ds.length).toFixed(1);
+  const avgCUF=(ds.reduce((a,r)=>a+r.CUF,0)/ds.length).toFixed(1);
+  const avgDT=(ds.reduce((a,r)=>a+r.DT,0)/ds.length).toFixed(1);
+  const best=ds.reduce((a,r)=>r.E>a.E?r:a,ds[0]);
+  const bestPR=ds.reduce((a,r)=>r.PR>a.PR?r:a,ds[0]);
+  const totalIrr=ds.reduce((a,r)=>a+r.Irr,0).toFixed(1);
+  const totalCurt=(ds.reduce((a,r)=>a+(r.Curt||0),0)/1000).toFixed(2);
+  document.getElementById('kv-gen').innerHTML=`${(tot/1000).toFixed(1)}<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">MWh</span>`;
+  document.getElementById('kv-pr').innerHTML=`${avgPR}<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">%</span>`;
+  document.getElementById('kv-cuf').innerHTML=`${avgCUF}<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">%</span>`;
+  document.getElementById('kv-avail').innerHTML=`${(100-parseFloat(avgDT)).toFixed(1)}<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">%</span>`;
+  document.getElementById('kv-irr').innerHTML=`${totalIrr}<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">kWh/m²</span>`;
+  document.getElementById('kv-curt').innerHTML=`${totalCurt}<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">MWh</span>`;
+  document.getElementById('kv-peak').innerHTML=`${(best.E/1000).toFixed(1)}<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">MWh</span>`;
+  document.getElementById('ks-peak').textContent=`${best.Label} — best day of March`;
+  document.getElementById('kv-bestpr').innerHTML=`${bestPR.PR}<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:2px">%</span>`;
+  document.getElementById('ks-bestpr').textContent=`${bestPR.Label} · clear sky conditions`;
+  const sp=document.getElementById('ks-pr');
+  sp.textContent=parseFloat(avgPR)>=S.prTarget?`✓ ${(parseFloat(avgPR)-S.prTarget).toFixed(1)}pp above ${S.prTarget}% target`:`⚠ ${(S.prTarget-parseFloat(avgPR)).toFixed(1)}pp below ${S.prTarget}% target`;
+  sp.className=parseFloat(avgPR)>=S.prTarget?'up':'dn';
+  document.getElementById('ks-cuf').textContent=`CUF · ${S.cap.toLocaleString()} kW installed`;
+  document.getElementById('mc-avgday').textContent=`${(tot/ds.length/1000).toFixed(1)} MWh`;
+  document.getElementById('mc-bestpr').textContent=`${bestPR.PR}%`;
+  document.getElementById('mc-bestpr-day').textContent=bestPR.Label;
+  document.getElementById('mc-peak').textContent=`${(best.E/1000).toFixed(1)} MWh`;
+  document.getElementById('mc-peak-day').textContent=best.Label;
+}
+
+// Controls
+function setGran(g){
+  S.gran=g;
+  ['daily','weekly','monthly'].forEach(x=>document.getElementById('gran-'+x).classList.toggle('on',x===g));
+  const sb=document.getElementById('sb-gran');if(sb)sb.value=g;
+  bGen();bPR();bCUF();bIrr();bLoss();updateKPIs();
+}
+function setMetric(m){
+  S.metric=m;
+  ['energy','pr','cuf','poa'].forEach(x=>document.getElementById('met-'+x).classList.toggle('on',x===m));
+  bGen();
+}
+function setChartType(t){
+  S.ct=t;
+  ['bar','line','area'].forEach(x=>document.getElementById('ct-'+x).classList.toggle('on',x===t));
+  bGen();
+}
+function setMainChart(t,btn){
+  S.ct=t;
+  document.querySelectorAll('.pact .bxs').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  ['bar','line','area'].forEach(x=>document.getElementById('ct-'+x).classList.toggle('on',x===t));
+  bGen();
+}
+function updatePRTarget(v){
+  S.prTarget=parseFloat(v)||75;
+  document.getElementById('ctrl-pr').value=S.prTarget;
+  const sb=document.getElementById('sb-prtarget');if(sb)sb.value=S.prTarget;
+  updateKPIs();bPR();
+}
+function updateCap(v){
+  S.cap=parseFloat(v)||1600.5;
+  document.getElementById('ctrl-cap').value=S.cap;
+  const sb=document.getElementById('sb-cap');if(sb)sb.value=S.cap;
+  document.getElementById('mc-cap').textContent=`${Math.round(S.cap).toLocaleString()} kW`;
+  updateKPIs();bCUF();
+}
+function updateProjectName(v){document.getElementById('navSub').textContent=`${v||'Tri-Force Energy'} · 86 Sites`;}
+function updateSiteCount(v){const n=parseInt(v)||86;document.getElementById('navSub').textContent=`Tri-Force Energy · ${n} Sites`;document.getElementById('siteCountLbl').textContent=`${n} Sites Active`;document.getElementById('mc-sites').textContent=n;}
+function togglePanel(id,show){const el=document.getElementById(id);if(el)el.style.display=show?'flex':'none';}
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('open');buildThemeSwatches();updateAccentPreview();}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open');}
+function applySettings(){updateProjectName(document.getElementById('sb-projname').value);updateSiteCount(document.getElementById('sb-sites').value);updateCap(document.getElementById('sb-cap').value);updatePRTarget(document.getElementById('sb-prtarget').value);setGran(document.getElementById('sb-gran').value);closeSidebar();}
+document.querySelectorAll('.npill').forEach(p=>p.addEventListener('click',function(){document.querySelectorAll('.npill').forEach(x=>x.classList.remove('on'));this.classList.add('on');}));
+
+
+// ══════════════════════════════════════════════
+//  WELCOME SCREEN LOGIC
+// ══════════════════════════════════════════════
+(function(){
+  var starsEl = document.getElementById('wsStars');
+  if(starsEl){
+    var sh = '';
+    for(var i=0;i<90;i++){
+      var x=Math.random()*100, y=Math.random()*80;
+      var s=(0.8+Math.random()*2.2).toFixed(1);
+      var d=(Math.random()*3).toFixed(1);
+      var dur=(1.5+Math.random()*2.5).toFixed(1);
+      sh+='<div class="ws-star" style="left:'+x+'%;top:'+y+'%;width:'+s+'px;height:'+s+'px;animation-delay:'+d+'s;animation-duration:'+dur+'s"></div>';
+    }
+    starsEl.innerHTML = sh;
+  }
+
+  var segments = [
+    {t:'Welcome to ',cls:''},
+    {t:'Sunfinity',cls:'hi'},
+    {t:' ☀️',cls:''},
+    {t:'|NL|',cls:''},
+    {t:'Hey Sun Doctors',cls:'hi'},
+    {t:' — ready to dive into',cls:''},
+    {t:'|NL|',cls:''},
+    {t:'Tri-Force Health Reports',cls:'accent'},
+    {t:'|NL|',cls:''},
+    {t:'and supercharge operations ⚡',cls:''},
+  ];
+
+  var chars = [];
+  segments.forEach(function(seg){
+    if(seg.t==='|NL|'){ chars.push({ch:'<br>',cls:'',isBr:true}); return; }
+    for(var ci=0;ci<seg.t.length;ci++) chars.push({ch:seg.t[ci],cls:seg.cls,isBr:false});
+  });
+
+  var built = [];
+  var typeI = 0;
+  var typedEl = document.getElementById('wsTyped');
+  var cursorEl = document.getElementById('wsCursor');
+
+  function typeNext(){
+    var ws = document.getElementById('welcome-screen');
+    if(!ws || ws.classList.contains('hidden')) return;
+    if(typeI >= chars.length){ return; }
+    var c2 = chars[typeI];
+    if(c2.isBr){
+      built.push('<br>');
+    } else {
+      var ch = c2.ch === '<' ? '&lt;' : c2.ch === '>' ? '&gt;' : c2.ch;
+      built.push(c2.cls ? '<span class="'+c2.cls+'">'+ch+'</span>' : ch);
+    }
+    if(typedEl) typedEl.innerHTML = built.join('');
+    typeI++;
+    var speed = c2.isBr ? 260 : (c2.ch===' ' ? 35 : 38+Math.random()*28);
+    setTimeout(typeNext, speed);
+  }
+
+  setTimeout(typeNext, 600);
+
+  window.addEventListener('wheel', function onScroll(){
+    dismissWelcome();
+    window.removeEventListener('wheel',onScroll);
+  },{passive:true});
+
+  document.addEventListener('keydown', function onKey(){
+    dismissWelcome();
+    document.removeEventListener('keydown',onKey);
+  });
+})();
+
+function dismissWelcome(){
+  var ws = document.getElementById('welcome-screen');
+  if(!ws || ws.classList.contains('hiding')) return;
+  ws.classList.add('hiding');
+  setTimeout(function(){ ws.classList.add('hidden'); }, 850);
+}
+
+buildAll();updateKPIs();
+
+// ══════════════════════════════════════════════════
+// VIEW SWITCHER
+// ══════════════════════════════════════════════════
+function showView(view, btn){
+  // Toggle overview sections
+  const overviewEls = ['#kpi-section-wrap','#main-grid-wrap','#section-label-analytics','#bot-row-wrap'];
+  const overviewSections = document.querySelectorAll('.kpi-section,.main-grid,.bot-row,.section-label');
+  overviewSections.forEach(el=>{
+    if(view==='overview') el.style.display='';
+    else el.style.display='none';
+  });
+  // cbar always visible
+  document.getElementById('view-sitedash').style.display = view==='sitedash'?'block':'none';
+  document.getElementById('view-mapview').style.display = view==='mapview'?'block':'none';
+  // Update nav pills
+  document.querySelectorAll('.npill').forEach(p=>p.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  if(view==='mapview') setTimeout(initMap,50);
+}
+
+// ══════════════════════════════════════════════════
+// SITE DATA
+// ══════════════════════════════════════════════════
+const SITES_DATA = [
+  {id:1,n:'Saunders Settlement',state:'NJ',kWp:210,lat:40.72,lng:-74.18,pr:82.4,kWh:545340,avail:97.2,devices:6,type:'Commercial'},
+  {id:2,n:'MSK - Monmouth',state:'NJ',kWp:95,lat:40.29,lng:-74.02,pr:79.1,kWh:217450,avail:96.8,devices:3,type:'Healthcare'},
+  {id:3,n:'Westside Harvesting #2',state:'NJ',kWp:80,lat:40.68,lng:-74.31,pr:77.6,kWh:172560,avail:95.5,devices:3,type:'Industrial'},
+  {id:4,n:'AHS Chilton Medical Ctr',state:'NJ',kWp:62,lat:40.97,lng:-74.49,pr:75.2,kWh:130810,avail:95.0,devices:2,type:'Healthcare'},
+  {id:5,n:'Gardner',state:'NJ',kWp:44,lat:40.84,lng:-74.62,pr:89.9,kWh:96500,avail:99.1,devices:2,type:'Municipal'},
+  {id:6,n:'AHS Morristown - Women',state:'NJ',kWp:42,lat:40.79,lng:-74.48,pr:74.8,kWh:95970,avail:94.9,devices:2,type:'Healthcare'},
+  {id:7,n:'Boscovs Moorestown',state:'NJ',kWp:41,lat:39.98,lng:-74.94,pr:73.5,kWh:93090,avail:94.2,devices:2,type:'Retail'},
+  {id:8,n:'AHS Morristown Rockaway',state:'NJ',kWp:30,lat:40.90,lng:-74.51,pr:76.3,kWh:68760,avail:95.6,devices:1,type:'Healthcare'},
+  {id:9,n:'Princeton University #1',state:'NJ',kWp:55,lat:40.35,lng:-74.66,pr:81.2,kWh:128000,avail:97.8,devices:3,type:'Education'},
+  {id:10,n:'Rutgers Camden Campus',state:'NJ',kWp:48,lat:39.95,lng:-75.12,pr:78.4,kWh:105000,avail:96.3,devices:2,type:'Education'},
+  {id:11,n:'JFK Airport Terminal',state:'NY',kWp:180,lat:40.64,lng:-73.78,pr:76.9,kWh:380000,avail:95.8,devices:5,type:'Commercial'},
+  {id:12,n:'Long Island Medical',state:'NY',kWp:70,lat:40.73,lng:-73.59,pr:80.1,kWh:155000,avail:96.9,devices:2,type:'Healthcare'},
+  {id:13,n:'Newark Liberty Cargo',state:'NJ',kWp:120,lat:40.69,lng:-74.17,pr:74.2,kWh:245000,avail:94.5,devices:4,type:'Industrial'},
+  {id:14,n:'Philadelphia Museum',state:'PA',kWp:65,lat:39.96,lng:-75.18,pr:83.0,kWh:141000,avail:98.0,devices:2,type:'Municipal'},
+  {id:15,n:'Trenton City Hall',state:'NJ',kWp:28,lat:40.22,lng:-74.76,pr:72.1,kWh:59000,avail:93.4,devices:1,type:'Municipal'},
+  {id:16,n:'Atlantic City Boardwalk',state:'NJ',kWp:90,lat:39.36,lng:-74.43,pr:85.6,kWh:198000,avail:98.3,devices:3,type:'Commercial'},
+  {id:17,n:'PNCT - Outbound Gate',state:'NJ',kWp:8,lat:40.67,lng:-74.14,pr:38.2,kWh:2610,avail:61.2,devices:1,type:'Industrial'},
+  {id:18,n:'FAC - Warren',state:'NJ',kWp:6,lat:40.76,lng:-74.51,pr:35.8,kWh:1380,avail:58.4,devices:1,type:'Industrial'},
+  {id:19,n:'St. Polycarp 2 Array',state:'NJ',kWp:9,lat:40.83,lng:-74.12,pr:42.1,kWh:2030,avail:65.0,devices:1,type:'Religious'},
+  {id:20,n:'Old Colony 2 C',state:'NJ',kWp:10,lat:40.91,lng:-74.22,pr:43.5,kWh:2680,avail:66.3,devices:1,type:'Residential'},
+  {id:21,n:'PREIT Moorestown Mall',state:'NJ',kWp:11,lat:39.97,lng:-74.93,pr:45.2,kWh:2890,avail:68.1,devices:1,type:'Retail'},
+  {id:22,n:'Bergen County Court',state:'NJ',kWp:38,lat:40.92,lng:-74.07,pr:77.8,kWh:82000,avail:96.1,devices:2,type:'Municipal'},
+  {id:23,n:'Hackensack Medical',state:'NJ',kWp:52,lat:40.89,lng:-74.04,pr:79.5,kWh:112000,avail:97.0,devices:2,type:'Healthcare'},
+  {id:24,n:'Montclair State Univ',state:'NJ',kWp:75,lat:40.86,lng:-74.20,pr:81.8,kWh:163000,avail:97.5,devices:3,type:'Education'},
+  {id:25,n:'West Orange YMCA',state:'NJ',kWp:22,lat:40.79,lng:-74.26,pr:74.0,kWh:47000,avail:94.0,devices:1,type:'Commercial'},
+  {id:26,n:'Bloomfield Township',state:'NJ',kWp:18,lat:40.80,lng:-74.19,pr:71.4,kWh:37800,avail:93.1,devices:1,type:'Municipal'},
+  {id:27,n:'Parsippany Office Park',state:'NJ',kWp:85,lat:40.86,lng:-74.43,pr:76.8,kWh:182000,avail:95.7,devices:3,type:'Commercial'},
+  {id:28,n:'Madison Borough Hall',state:'NJ',kWp:15,lat:40.76,lng:-74.42,pr:73.2,kWh:31500,avail:93.5,devices:1,type:'Municipal'},
+  {id:29,n:'Florham Park Corp Ctr',state:'NJ',kWp:110,lat:40.78,lng:-74.39,pr:80.7,kWh:235000,avail:97.2,devices:4,type:'Commercial'},
+  {id:30,n:'Whippany Data Center',state:'NJ',kWp:145,lat:40.83,lng:-74.42,pr:82.9,kWh:315000,avail:98.1,devices:4,type:'Technology'},
+  // Remaining 56 sites (abbreviated for JS size)
+  ...Array.from({length:56},(_,i)=>{
+    const names=['Cherry Hill Logistics','Camden Waterfront','Gloucester Solar Farm','Salem Nuclear Adj','Cape May Resort','Ocean County Mall','Toms River Civic','Brick Township Hall','Lakewood Commons','Jackson Logistics','Freehold Raceway','Red Bank Arts Ctr','Fair Haven Marina','Rumson Estates','Middletown Twsp','Aberdeen Municipal','Raritan Bay Solar','Perth Amboy Civic','Woodbridge Center','Edison Research Park','Piscataway Univ Hub','New Brunswick Main','Highland Park Hall','Metuchen Borough','Bound Brook MUA','Somerville Train Stn','Bridgewater Corp','Basking Ridge Sch','Far Hills Country','Peapack Manor','Chester Township','Mendham Borough','Roxbury Cross Keys','Mt Olive Commons','Netcong Solar Hub','Mt Arlington Muni','Lake Hopatcong Res','Rockaway Mall','Denville Township','Boonton Reservoirs','Lincoln Park Civic','Wayne Township','Paterson Civic Ctr','Clifton Corp Campus','Montclair Heights','Verona Municipal','Caldwell Borough','Cedar Grove TWP','Little Falls Indus','Totowa Industrial','Wayne Commons','Woodland Park Res','Passaic Civic Hub','Garfield Solar Arr','Lodi Township Hall','Saddle Brook Res'];
+    const baseIds = [31+i];
+    const lats=[39.94,39.93,39.79,39.57,38.93,39.97,39.95,40.06,40.10,40.10,40.22,40.35,40.37,40.37,40.39,40.41,40.43,40.51,40.56,40.54,40.53,40.49,40.48,40.54,40.57,40.58,40.59,40.68,40.77,40.70,40.78,40.77,40.87,40.90,40.90,40.92,40.99,40.95,40.88,40.90,40.93,40.94,40.92,40.86,40.84,40.83,40.84,40.85,40.88,40.90,40.89,40.88,40.86,40.89,40.88,40.88];
+    const lngs=[-75.0,-75.11,-75.06,-75.47,-74.92,-74.20,-74.20,-74.14,-74.22,-74.36,-74.27,-74.08,-74.04,-74.01,-74.12,-74.22,-74.26,-74.27,-74.29,-74.33,-74.40,-74.44,-74.42,-74.36,-74.53,-74.61,-74.61,-74.59,-74.53,-74.50,-74.67,-74.67,-74.57,-74.73,-74.72,-74.62,-74.66,-74.56,-74.48,-74.40,-74.30,-74.26,-74.14,-74.14,-74.21,-74.24,-74.28,-74.28,-74.20,-74.22,-74.27,-74.19,-74.13,-74.10,-74.08,-74.07]
+    const pr=55+Math.round(Math.random()*32);
+    const kWp=Math.round(10+Math.random()*80);
+    return {id:31+i,n:names[i]||`Site-${31+i}`,state:'NJ',kWp,lat:lats[i]||40.5+Math.random()*.5,lng:lngs[i]||-74.3+Math.random()*.5,pr,kWh:Math.round(kWp*1200*(0.7+Math.random()*0.6)),avail:Math.round(88+Math.random()*12*10)/10,devices:Math.ceil(kWp/50),type:'Commercial'};
+  })
+];
+
+// Device data generator per site
+function genDevices(site){
+  const devCount = site.devices || Math.ceil(site.kWp / 45);
+  const types = ['INV','INV','INV','MTR','SEN'];
+  const devs = [];
+  for(let i=0;i<devCount;i++){
+    const type = i===devCount-1&&devCount>2?'MTR':(i===devCount-2&&devCount>3?'SEN':'INV');
+    const basePR = site.pr + (Math.random()-0.5)*12;
+    const kWh = Math.round((site.kWh/devCount)*(0.85+Math.random()*0.3));
+    const avail = Math.round((site.avail-2+Math.random()*4)*10)/10;
+    const status = avail<90?'err':basePR<65?'warn':'ok';
+    devs.push({
+      name: type==='INV'?`Inverter-${String(i+1).padStart(2,'0')}`:type==='MTR'?'Revenue Meter':'Pyranometer',
+      type, kWp: Math.round(site.kWp/devCount*10)/10,
+      kWh, pr: Math.round(basePR*10)/10, avail, status,
+      trend: Array.from({length:7},()=>Math.round(kWh/30*(0.7+Math.random()*0.6)))
+    });
+  }
+  return devs;
+}
+
+// Populate site selector
+(function(){
+  const sel = document.getElementById('siteSelector');
+  SITES_DATA.forEach(s=>{
+    const o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = `${s.n} (${s.kWp} kWp)`;
+    sel.appendChild(o);
+  });
+})();
+
+let currentSiteDevices = [];
+let currentDeviceFilter = 'all';
+
+function loadSiteDash(siteId){
+  if(!siteId){ document.getElementById('siteDashContent').style.display='none';document.getElementById('siteDashEmpty').style.display='block';return; }
+  const site = SITES_DATA.find(s=>s.id==siteId);
+  if(!site) return;
+  document.getElementById('siteDashContent').style.display='block';
+  document.getElementById('siteDashEmpty').style.display='none';
+  document.getElementById('siteEnergyMeta').textContent = `kWh/day · ${site.n} · March 2026`;
+
+  // KPI pills
+  const prColor = site.pr>=80?'#34d399':site.pr>=65?'#fbbf24':'#f472b6';
+  document.getElementById('siteKpiRow').innerHTML = `
+    <div class="site-kpi-pill"><span class="lbl">Monthly kWh</span><span class="val" style="color:#f59e0b">${(site.kWh/1000).toFixed(1)}k</span><span class="sub">March 2026</span></div>
+    <div class="site-kpi-pill"><span class="lbl">Avg PR</span><span class="val" style="color:${prColor}">${site.pr}%</span><span class="sub">Performance Ratio</span></div>
+    <div class="site-kpi-pill"><span class="lbl">Availability</span><span class="val" style="color:#60a5fa">${site.avail}%</span><span class="sub">Uptime</span></div>
+    <div class="site-kpi-pill"><span class="lbl">Capacity</span><span class="val" style="color:#a78bfa">${site.kWp}</span><span class="sub">kWp installed</span></div>
+    <div class="site-kpi-pill"><span class="lbl">Devices</span><span class="val" style="color:#38bdf8">${site.devices}</span><span class="sub">Active</span></div>
+  `;
+
+  // Generate daily data for site
+  const siteDailyE = DAILY.map(d=>Math.round(d.E*(site.kWh/3254900)*(0.92+Math.random()*.16)));
+  const siteDailyPR = DAILY.map(d=>Math.round((d.PR*(site.pr/77.6))*(0.93+Math.random()*.14)*10)/10);
+
+  // Site gen chart
+  if(CH['siteGenChart']) CH['siteGenChart'].destroy();
+  CH['siteGenChart'] = new Chart(document.getElementById('siteGenChart'),{
+    type:'bar',
+    data:{labels:DAILY.map(r=>r.Label),datasets:[
+      {label:'kWh',data:siteDailyE,backgroundColor:'rgba(245,158,11,0.75)',borderRadius:4,borderSkipped:false,yAxisID:'y'},
+      {label:'PR %',data:siteDailyPR,type:'line',borderColor:'#60a5fa',borderWidth:2,pointRadius:0,tension:.4,fill:false,yAxisID:'y1'}
+    ]},
+    options:{...BO,scales:{
+      x:{ticks:{color:TC,font:{size:9,family:"'JetBrains Mono',monospace"},maxTicksLimit:16},grid:{color:GC}},
+      y:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v},grid:{color:GC}},
+      y1:{type:'linear',position:'right',min:0,max:100,ticks:{color:'rgba(96,165,250,.5)',font:{size:9},callback:v=>v+'%'},grid:{drawOnChartArea:false}}
+    }}
+  });
+
+  // Stats
+  const co2 = Math.round(site.kWh*0.705/1000);
+  document.getElementById('siteStatsList').innerHTML = `
+    <div class="stat-item"><span class="stat-lbl">Location</span><span class="stat-val">${site.state} · ${site.type}</span></div>
+    <div class="stat-item"><span class="stat-lbl">Lat / Lng</span><span class="stat-val" style="font-size:10px;font-family:'JetBrains Mono',monospace">${site.lat.toFixed(3)}, ${site.lng.toFixed(3)}</span></div>
+    <div class="stat-item"><span class="stat-lbl">Best Day</span><span class="stat-val" style="color:#fbbf24">${(Math.max(...siteDailyE)/1000).toFixed(2)} MWh</span></div>
+    <div class="stat-item"><span class="stat-lbl">Avg Daily</span><span class="stat-val">${(site.kWh/31/1000).toFixed(2)} MWh</span></div>
+    <div class="stat-item"><span class="stat-lbl">CO₂ Avoided</span><span class="stat-val" style="color:#a3e635">${co2} tonnes</span></div>
+    <div class="stat-item"><span class="stat-lbl">CUF</span><span class="stat-val" style="color:#a78bfa">${(site.kWh/(site.kWp*24*31)*100).toFixed(1)}%</span></div>
+  `;
+
+  // Devices
+  currentSiteDevices = genDevices(site);
+  currentDeviceFilter = 'all';
+  renderDeviceTable();
+  renderDeviceCharts();
+}
+
+function setSiteChartType(type, btn){
+  document.querySelectorAll('#siteDashContent .pact .bxs').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  const site = SITES_DATA.find(s=>s.id==document.getElementById('siteSelector').value);
+  if(!site) return;
+  const siteDailyE = DAILY.map(d=>Math.round(d.E*(site.kWh/3254900)*(0.92+Math.random()*.16)));
+  const siteDailyPR = DAILY.map(d=>Math.round((d.PR*(site.pr/77.6))*(0.93+Math.random()*.14)*10)/10);
+  if(CH['siteGenChart']) CH['siteGenChart'].destroy();
+  const isBar = type==='bar';
+  CH['siteGenChart'] = new Chart(document.getElementById('siteGenChart'),{
+    type:isBar?'bar':'line',
+    data:{labels:DAILY.map(r=>r.Label),datasets:[
+      isBar?{label:'kWh',data:siteDailyE,backgroundColor:'rgba(245,158,11,0.75)',borderRadius:4,borderSkipped:false,yAxisID:'y'}:
+            {label:'kWh',data:siteDailyE,borderColor:'#f59e0b',borderWidth:2.5,pointRadius:0,tension:.4,fill:true,backgroundColor:'rgba(245,158,11,0.12)',yAxisID:'y'},
+      {label:'PR %',data:siteDailyPR,type:'line',borderColor:'#60a5fa',borderWidth:2,pointRadius:0,tension:.4,fill:false,yAxisID:'y1'}
+    ]},
+    options:{...BO,scales:{
+      x:{ticks:{color:TC,font:{size:9,family:"'JetBrains Mono',monospace"},maxTicksLimit:16},grid:{color:GC}},
+      y:{ticks:{color:TC,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v},grid:{color:GC}},
+      y1:{type:'linear',position:'right',min:0,max:100,ticks:{color:'rgba(96,165,250,.5)',font:{size:9},callback:v=>v+'%'},grid:{drawOnChartArea:false}}
+    }}
+  });
+}
+
+function filterDevices(f, btn){
+  currentDeviceFilter = f;
+  document.querySelectorAll('#siteDashContent .pact .bxs').forEach(b=>b.classList.remove('on'));
+  // Only target the device filter buttons (second pact group)
+  const actBtns = document.querySelectorAll('[onclick^="filterDevices"]');
+  actBtns.forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderDeviceTable();
+}
+
+function renderDeviceTable(){
+  let devs = currentSiteDevices;
+  if(currentDeviceFilter==='inverter') devs=devs.filter(d=>d.type==='INV');
+  else if(currentDeviceFilter==='meter') devs=devs.filter(d=>d.type==='MTR'||d.type==='SEN');
+  else if(currentDeviceFilter==='alert') devs=devs.filter(d=>d.status!=='ok');
+  const tbody = document.getElementById('deviceTbody');
+  if(!devs.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--t3);font-size:11px">No devices match filter</td></tr>';return;}
+  tbody.innerHTML = devs.map(d=>{
+    const sc = d.status==='ok'?'status-ok':d.status==='warn'?'status-warn':'status-err';
+    const sl = d.status==='ok'?'● Online':d.status==='warn'?'🚨 Warning':'🚨 Fault';
+    const prC = d.pr>=80?'#34d399':d.pr>=65?'#fbbf24':'#f472b6';
+    const typeLabel = d.type==='INV'?'🔌 Inverter':d.type==='MTR'?'📊 Meter':'🌡 Sensor';
+    const sparkBars = d.trend.map(v=>{const h=Math.round(v/Math.max(...d.trend)*18);return`<span style="display:inline-block;width:4px;height:${h}px;background:#f59e0b88;border-radius:1px;margin-right:1px;vertical-align:bottom"></span>`;}).join('');
+    return`<tr class="device-row">
+      <td style="color:var(--t1);font-weight:600">${d.name}</td>
+      <td><span style="font-size:10px;color:var(--t3)">${typeLabel}</span></td>
+      <td style="text-align:right;font-family:'JetBrains Mono',monospace">${d.kWp} kWp</td>
+      <td style="text-align:right;color:#f59e0b;font-family:'JetBrains Mono',monospace;font-weight:700">${(d.kWh/1000).toFixed(1)}k</td>
+      <td style="text-align:right;color:${prC};font-family:'JetBrains Mono',monospace;font-weight:700">${d.pr}%</td>
+      <td style="text-align:right;font-family:'JetBrains Mono',monospace">${d.avail}%</td>
+      <td style="text-align:center"><span class="status-badge ${sc}">${sl}</span></td>
+      <td style="text-align:right">${sparkBars}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDeviceCharts(){
+  const devs = currentSiteDevices.filter(d=>d.type==='INV'||d.type==='MTR');
+  const colors = ['#f59e0b','#60a5fa','#34d399','#a78bfa','#f472b6','#38bdf8','#fbbf24','#a3e635'];
+  if(CH['deviceBarChart']) CH['deviceBarChart'].destroy();
+  CH['deviceBarChart'] = new Chart(document.getElementById('deviceBarChart'),{
+    type:'bar',
+    data:{labels:devs.map(d=>d.name),datasets:[{
+      label:'kWh',data:devs.map(d=>d.kWh),
+      backgroundColor:devs.map((_,i)=>colors[i%colors.length]+'bb'),
+      borderColor:devs.map((_,i)=>colors[i%colors.length]),
+      borderWidth:1.5,borderRadius:6,borderSkipped:false
+    }]},
+    options:{...BO,scales:{x:{ticks:{color:TC,font:{size:9,family:"'JetBrains Mono',monospace"}},grid:{color:GC}},y:{ticks:{color:TC,font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v},grid:{color:GC}}}}
+  });
+  if(CH['devicePRChart']) CH['devicePRChart'].destroy();
+  CH['devicePRChart'] = new Chart(document.getElementById('devicePRChart'),{
+    type:'bar',
+    data:{labels:devs.map(d=>d.name),datasets:[{
+      label:'PR %',data:devs.map(d=>d.pr),
+      backgroundColor:devs.map(d=>d.pr>=80?'rgba(52,211,153,.7)':d.pr>=65?'rgba(251,191,36,.7)':'rgba(244,114,182,.7)'),
+      borderColor:devs.map(d=>d.pr>=80?'#34d399':d.pr>=65?'#fbbf24':'#f472b6'),
+      borderWidth:1.5,borderRadius:6,borderSkipped:false
+    }]},
+    options:{...BO,scales:{x:{ticks:{color:TC,font:{size:9,family:"'JetBrains Mono',monospace"}},grid:{color:GC}},y:{min:0,max:100,ticks:{color:TC,font:{size:9},callback:v=>v+'%'},grid:{color:GC}}}}
+  });
+}
+
+// ══════════════════════════════════════════════════
+// MAP VIEW
+// ══════════════════════════════════════════════════
+let mapFilter = 'all';
+let mapCanvas, mapCtx, mapW, mapH;
+let mapHoveredSite = null;
+
+function initMap(){
+  mapCanvas = document.getElementById('mapCanvas');
+  if(!mapCanvas) return;
+  const container = document.getElementById('siteMap');
+  mapCanvas.width = container.offsetWidth;
+  mapCanvas.height = container.offsetHeight;
+  mapW = mapCanvas.width;
+  mapH = mapCanvas.height;
+  mapCtx = mapCanvas.getContext('2d');
+
+  // Populate site list
+  renderSiteList('');
+  drawMap();
+
+  mapCanvas.addEventListener('mousemove', onMapHover);
+  mapCanvas.addEventListener('click', onMapClick);
+  mapCanvas.addEventListener('mouseleave', ()=>{mapHoveredSite=null;drawMap();document.getElementById('mapTooltip').style.display='none';});
+}
+
+// Geo bounds for NJ/NY/PA region
+const MAP_BOUNDS = {minLat:38.8,maxLat:41.2,minLng:-75.6,maxLng:-73.5};
+
+function latLngToXY(lat,lng){
+  const x = ((lng-MAP_BOUNDS.minLng)/(MAP_BOUNDS.maxLng-MAP_BOUNDS.minLng))*mapW;
+  const y = (1-(lat-MAP_BOUNDS.minLat)/(MAP_BOUNDS.maxLat-MAP_BOUNDS.minLat))*mapH;
+  return {x,y};
+}
+
+function getSiteColor(site){
+  if(site.pr>=80) return '#34d399';
+  if(site.pr>=65) return '#fbbf24';
+  return '#f472b6';
+}
+
+function getFilteredSites(){
+  if(mapFilter==='top') return SITES_DATA.filter(s=>s.pr>=80);
+  if(mapFilter==='alert') return SITES_DATA.filter(s=>s.pr<65);
+  return SITES_DATA;
+}
+
+function drawMap(){
+  if(!mapCtx) return;
+  const ctx = mapCtx;
+  ctx.clearRect(0,0,mapW,mapH);
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0,0,mapW,mapH);
+  bg.addColorStop(0,'#060d18');bg.addColorStop(1,'#0a1525');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,mapW,mapH);
+
+  // Draw grid lines
+  ctx.strokeStyle='rgba(245,158,11,0.05)';ctx.lineWidth=1;
+  for(let i=0;i<8;i++){ctx.beginPath();ctx.moveTo(i*(mapW/7),0);ctx.lineTo(i*(mapW/7),mapH);ctx.stroke();}
+  for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(0,i*(mapH/5));ctx.lineTo(mapW,i*(mapH/5));ctx.stroke();}
+
+  // Draw state labels
+  ctx.font='bold 11px JetBrains Mono, monospace';
+  ctx.fillStyle='rgba(100,130,180,0.35)';
+  ctx.fillText('NEW JERSEY', mapW*.35, mapH*.5);
+  ctx.fillText('NEW YORK', mapW*.72, mapH*.18);
+  ctx.fillText('PENNSYLVANIA', mapW*.08, mapH*.75);
+
+  // Draw sites
+  const sites = getFilteredSites();
+  sites.forEach(site=>{
+    const {x,y} = latLngToXY(site.lat,site.lng);
+    const col = getSiteColor(site);
+    const r = Math.max(5, Math.min(14, 4+site.kWp/25));
+    const isHovered = mapHoveredSite && mapHoveredSite.id===site.id;
+
+    // Glow
+    const grad = ctx.createRadialGradient(x,y,0,x,y,r*3);
+    grad.addColorStop(0,col+'60');grad.addColorStop(1,'transparent');
+    ctx.fillStyle=grad;ctx.beginPath();ctx.arc(x,y,r*3,0,Math.PI*2);ctx.fill();
+
+    // Circle
+    ctx.fillStyle = col+(isHovered?'ff':'cc');
+    ctx.beginPath();ctx.arc(x,y,isHovered?r*1.4:r,0,Math.PI*2);ctx.fill();
+
+    // Border
+    ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(x,y,isHovered?r*1.4:r,0,Math.PI*2);ctx.stroke();
+
+    // Large site ring
+    if(site.kWp>100){
+      ctx.strokeStyle=col+'40';ctx.lineWidth=1.5;
+      ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(x,y,r*2.2,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+    }
+  });
+}
+
+function getSiteAtXY(x,y){
+  const sites = getFilteredSites();
+  for(const site of sites){
+    const {x:sx,y:sy} = latLngToXY(site.lat,site.lng);
+    const r = Math.max(5, Math.min(14, 4+site.kWp/25));
+    if(Math.sqrt((x-sx)**2+(y-sy)**2)<r+6) return site;
+  }
+  return null;
+}
+
+function onMapHover(e){
+  const rect = mapCanvas.getBoundingClientRect();
+  const x=(e.clientX-rect.left)*(mapW/rect.width);
+  const y=(e.clientY-rect.top)*(mapH/rect.height);
+  const site = getSiteAtXY(x,y);
+  const tip = document.getElementById('mapTooltip');
+  if(site){
+    mapHoveredSite = site;
+    drawMap();
+    const prCol=getSiteColor(site);
+    tip.innerHTML=`<div style="font-weight:800;font-size:12px;color:var(--t1);margin-bottom:6px">${site.n}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:10px">
+        <span style="color:var(--t3)">State</span><span style="color:var(--t1)">${site.state}</span>
+        <span style="color:var(--t3)">Type</span><span style="color:var(--t1)">${site.type}</span>
+        <span style="color:var(--t3)">Capacity</span><span style="color:#f59e0b;font-weight:700">${site.kWp} kWp</span>
+        <span style="color:var(--t3)">Monthly kWh</span><span style="color:#f59e0b;font-weight:700">${(site.kWh/1000).toFixed(1)}k</span>
+        <span style="color:var(--t3)">PR</span><span style="color:${prCol};font-weight:700">${site.pr}%</span>
+        <span style="color:var(--t3)">Availability</span><span style="color:#60a5fa">${site.avail}%</span>
+      </div>`;
+    const tipX = Math.min(e.clientX-rect.left+14, rect.width-220);
+    const tipY = Math.max(e.clientY-rect.top-10, 10);
+    tip.style.left=tipX+'px';tip.style.top=tipY+'px';tip.style.display='block';
+    mapCanvas.style.cursor='pointer';
+  } else {
+    mapHoveredSite=null;drawMap();tip.style.display='none';mapCanvas.style.cursor='default';
+  }
+}
+
+function onMapClick(e){
+  const rect=mapCanvas.getBoundingClientRect();
+  const x=(e.clientX-rect.left)*(mapW/rect.width);
+  const y=(e.clientY-rect.top)*(mapH/rect.height);
+  const site=getSiteAtXY(x,y);
+  if(site){
+    // Highlight in site list
+    document.querySelectorAll('.site-list-item').forEach(el=>el.classList.remove('active'));
+    const item=document.getElementById('sli-'+site.id);
+    if(item){item.classList.add('active');item.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  }
+}
+
+function filterMap(f,btn){
+  mapFilter=f;
+  document.querySelectorAll('[onclick^="filterMap"]').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  drawMap();
+}
+
+function filterSiteList(q){renderSiteList(q);}
+
+function renderSiteList(q){
+  const panel=document.getElementById('siteListPanel');
+  if(!panel) return;
+  const filtered=SITES_DATA.filter(s=>!q||s.n.toLowerCase().includes(q.toLowerCase())||s.state.toLowerCase().includes(q.toLowerCase()));
+  panel.innerHTML=filtered.map(s=>{
+    const col=getSiteColor(s);
+    const prTxt=s.pr>=80?`<span style="color:#34d399">${s.pr}%</span>`:s.pr>=65?`<span style="color:#fbbf24">${s.pr}%</span>`:`<span style="color:#f472b6">${s.pr}%</span>`;
+    return`<div class="site-list-item" id="sli-${s.id}" onclick="selectSiteFromList(${s.id})">
+      <span class="site-dot" style="background:${col};box-shadow:0 0 6px ${col}"></span>
+      <span class="site-list-name" title="${s.n}">${s.n}</span>
+      <span class="site-list-pr">${prTxt}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectSiteFromList(id){
+  const site=SITES_DATA.find(s=>s.id===id);
+  if(!site) return;
+  // Highlight on map
+  mapHoveredSite=site;drawMap();
+  document.querySelectorAll('.site-list-item').forEach(el=>el.classList.remove('active'));
+  const item=document.getElementById('sli-'+id);
+  if(item) item.classList.add('active');
+}
+
+
+// ── THEMES ──
+const THEMES = {
+  dark:   {label:'Dark',emoji:'🌙', bg:'#060d18',card:'#0f1c2e',card2:'#0a1525',t1:'#f1f5f9',t2:'#94a3b8',acc:'#f59e0b',acc2:'#fb923c', swA:'#0f1c2e',swB:'#060d18',swC:'#f59e0b'},
+  solar:  {label:'Solar',emoji:'☀️', bg:'#0b0d06',card:'#121a0d',card2:'#0e1509',t1:'#fef9ec',t2:'#a89d7a',acc:'#ffb820',acc2:'#ff7a1a', swA:'#121a0d',swB:'#0b0d06',swC:'#ffb820'},
+  light:  {label:'Light',emoji:'🌤', bg:'#f5f0e8',card:'#fffdf5',card2:'#fff8e6',t1:'#1a1208',t2:'#5c4a20',acc:'#b47a14',acc2:'#c8821a', swA:'#fffdf5',swB:'#f5f0e8',swC:'#b47a14'},
+  ocean:  {label:'Ocean',emoji:'🌊', bg:'#010d1a',card:'#061828',card2:'#031220',t1:'#e0f4ff',t2:'#7ab8d8',acc:'#38bdf8',acc2:'#0ea5e9', swA:'#061828',swB:'#010d1a',swC:'#38bdf8'},
+  ember:  {label:'Ember',emoji:'🔥', bg:'#0f0502',card:'#1e0c06',card2:'#16080a',t1:'#fff0e8',t2:'#c47a5a',acc:'#f87171',acc2:'#ef4444', swA:'#1e0c06',swB:'#0f0502',swC:'#f87171'},
+  aurora: {label:'Aurora',emoji:'✨', bg:'#060814',card:'#0e1228',card2:'#080c1e',t1:'#f0eeff',t2:'#9b8fd4',acc:'#a78bfa',acc2:'#7c3aed', swA:'#0e1228',swB:'#060814',swC:'#a78bfa'},
+  matrix: {label:'Matrix',emoji:'💚', bg:'#000d00',card:'#001800',card2:'#001200',t1:'#d4ffda',t2:'#4ade80',acc:'#4ade80',acc2:'#22c55e', swA:'#001800',swB:'#000d00',swC:'#4ade80'},
+  rose:   {label:'Rose',emoji:'🌸', bg:'#0f060e',card:'#1e0d1c',card2:'#180810',t1:'#ffe8f5',t2:'#d478b0',acc:'#f472b6',acc2:'#ec4899', swA:'#1e0d1c',swB:'#0f060e',swC:'#f472b6'},
+};
+
+function buildThemeSwatches(){
+  const grid = document.getElementById('sbThemesGrid');
+  if(!grid) return;
+  const cur = localStorage.getItem('sf-theme')||'solar';
+  grid.innerHTML = Object.entries(THEMES).map(([id,t])=>`
+    <div class="sb-theme-swatch${id===cur?' active':''}" onclick="setTheme('${id}')" id="sw-${id}" title="${t.label}">
+      <div class="sw-bg" style="background:linear-gradient(135deg,${t.swA} 0%,${t.swB} 100%)"></div>
+      <div class="sw-check">✓</div>
+      <div class="sw-dot" style="background:${t.swC}"></div>
+      <div class="sw-label">${t.emoji}<br>${t.label}</div>
+    </div>
+  `).join('');
+}
+
+function setTheme(t){
+  document.body.classList.remove(...Object.keys(THEMES).map(k=>'theme-'+k));
+  document.body.classList.add('theme-'+t);
+  // sync topnav buttons
+  document.querySelectorAll('.theme-btn').forEach(b=>{
+    b.classList.toggle('active', b.id==='tbtn-'+t);
+  });
+  // sync swatch grid
+  document.querySelectorAll('.sb-theme-swatch').forEach(s=>{
+    s.classList.toggle('active', s.id==='sw-'+t);
+  });
+  localStorage.setItem('sf-theme',t);
+  // sync color pickers to theme defaults
+  const td = THEMES[t];
+  if(td){
+    syncPicker('cp-acc', td.acc);
+    syncPicker('cp-acc2', td.acc2);
+    syncPicker('cp-bg', td.bg);
+    syncPicker('cp-card', td.card);
+    syncPicker('cp-t1', td.t1);
+    syncPicker('cp-t2', td.t2);
+  }
+  updateAccentPreview();
+}
+
+function syncPicker(id,val){
+  const el=document.getElementById(id);
+  if(el) el.value=val||'#000000';
+}
+
+function liveColor(prop, val){
+  document.documentElement.style.setProperty('--'+prop, val);
+  updateAccentPreview();
+}
+
+function updateAccentPreview(){
+  const prev=document.getElementById('accentPreview');
+  if(!prev) return;
+  const acc = document.getElementById('cp-acc')?.value||'#f59e0b';
+  const acc2 = document.getElementById('cp-acc2')?.value||'#fb923c';
+  prev.style.background=`linear-gradient(90deg,${acc},${acc2})`;
+}
+
+function resetColors(){
+  const cur = (localStorage.getItem('sf-theme')||'solar');
+  // re-apply the full theme which resets all CSS vars
+  document.body.classList.remove(...Object.keys(THEMES).map(k=>'theme-'+k));
+  document.body.classList.add('theme-'+cur);
+  // clear any inline overrides
+  ['--acc','--acc2','--bg','--card','--card2','--t1','--t2'].forEach(v=>{
+    document.documentElement.style.removeProperty(v);
+  });
+  setTheme(cur);
+}
+
+function applyRadius(v){
+  document.querySelectorAll('.card-wrap,.kpi-card,.mcard,.info-pop').forEach(el=>{
+    el.style.borderRadius=v+'px';
+  });
+}
+
+buildThemeSwatches();
+// ── POPUPS ──
+function togglePop(btn){
+  const pid=btn.getAttribute('data-popid');
+  const pop=document.getElementById(pid);
+  const isOpen=pop.classList.contains('open');
+  // close all first
+  document.querySelectorAll('.info-pop.open').forEach(p=>p.classList.remove('open'));
+  if(!isOpen) pop.classList.add('open');
+}
+function closePop(pid){document.getElementById(pid).classList.remove('open');}
+// close popup on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.info-btn')&&!e.target.closest('.info-pop')){
+    document.querySelectorAll('.info-pop.open').forEach(p=>p.classList.remove('open'));
+  }
+});
+// restore theme
+const savedTheme=localStorage.getItem('sf-theme')||'solar';
+setTheme(savedTheme);
+updateAccentPreview();
+
+// ── AGS CAPTION ROTATOR ──
+(function(){
+  const items = Array.from(document.querySelectorAll('.ags-caption-item'));
+  const dots  = Array.from(document.querySelectorAll('.ags-dot'));
+  let current = 0;
+  let timer   = null;
+
+  function goCaption(idx){
+    const prev = current;
+    const next = ((idx % items.length) + items.length) % items.length;
+    if(prev === next) return;
+    items[prev].classList.remove('active');
+    items[prev].classList.add('exit');
+    setTimeout(()=>{ items[prev].classList.remove('exit'); }, 600);
+    items[next].classList.add('active');
+    current = next;
+    dots.forEach((d,i)=>d.classList.toggle('on', i===current));
+  }
+
+  window.goCaption = function(idx){ goCaption(idx); startRotator(); };
+
+  function startRotator(){
+    clearInterval(timer);
+    timer = setInterval(()=>goCaption(current+1), 3200);
+  }
+
+  const banner = document.querySelector('.ags-banner');
+  if(banner){
+    banner.addEventListener('mouseenter', ()=>clearInterval(timer));
+    banner.addEventListener('mouseleave', startRotator);
+  }
+  startRotator();
+})();
+
+</script>
+</body>
+</html>
